@@ -1,0 +1,23 @@
+# Material de referencia local (guía, sesiones de clase > 100 MB, retroalimentación con notas): no se publica
+referencias/
+
+# Entornos y cachés
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.Rproj.user/
+.Rhistory
+.RData
+*_cache/
+*_files/
+
+# Power BI: archivos temporales y de bloqueo
+~$*
+*.pbix.lock
+
+# Sistema
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+desktop.ini
