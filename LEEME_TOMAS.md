@@ -24,7 +24,7 @@
 |---|---|
 | **Power BI (tú)** | Panorama y exploración: KPI, ingreso por nivel educativo y sexo, evolución mensual, cotización a pensión, detalle por ciudad, con filtros. |
 | Python (Seaborn) | Distribución de ingresos, no solo promedios, y la brecha por grupo de edad. |
-| Python (Plotly) | Exploración por sector económico. |
+| Python (Plotly) | Dos interactivos por sector económico: panorama (dispersión) y brecha por sector según la edad. |
 | R | Mapa de la brecha por departamento. |
 
   → Por eso **quita el gráfico de barras "Ciudades donde la brecha es más urgente"**: lo territorial va en el mapa de R. La matriz ciudad × nivel educativo sí se queda como detalle.

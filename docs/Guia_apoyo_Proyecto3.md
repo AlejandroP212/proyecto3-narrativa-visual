@@ -23,7 +23,7 @@
 | Composición | Por qué la brecha general es casi 0 | Ver 1.4 |
 | Gráfico 1 | Densidades por sexo y nivel | Ver 1.5 |
 | Gráfico 2 | Barras de la brecha por edad con IC | Ver 1.5 |
-| Plotly | Dispersión hombres vs. mujeres por sector, con menú de edad | Ver 1.6 |
+| Plotly 1 y 2 | (1) Dispersión hombres vs. mujeres por sector (panorama). (2) Pesas por sector con menú de edad (ranking) | Ver 1.6 |
 | Tabla para R | Brecha por departamento + IC + CV, exportada a CSV | "El mapa usa exactamente estos números." |
 | Hallazgos y limitaciones | Resumen para la presentación | Se lee tal cual en la diapositiva de cierre. |
 
@@ -105,17 +105,39 @@ Siempre en tres pasos: **qué mide** (ingreso mensual o por hora), **cómo se mi
 
 **Por qué títulos neutrales.** Es la retroalimentación de la docente en el P1: el título describe ("Brecha de ingreso por hora… por grupo de edad") y lo que se observa va en el subtítulo.
 
-### 1.6 Plotly
+### 1.6 Plotly (dos gráficos interactivos)
 
-- **Tipo de gráfico: "pesas" (dumbbell) + barras.** Cada fila es un sector. A la izquierda, un punto azul (hombres) y uno ocre (mujeres) con su ingreso por hora, unidos por una línea: mientras más larga, mayor la diferencia. A la derecha de cada fila, el texto "42,3 % menos" (rojo) o "3,4 % más" (gris). El panel derecho tiene barras apiladas con cuántos ocupados con educación superior hay en el sector, por sexo (tamaño y composición).
-- **Por qué cambiamos del gráfico de dispersión a este.** En la dispersión los 18 puntos quedaban amontonados y había que adivinar qué sector era cada uno. Aquí cada sector tiene su nombre escrito, el orden (de mayor a menor brecha) ya cuenta la historia y se ve de inmediato quién gana más.
-- **Construcción.** `make_subplots` con dos paneles que comparten el eje de sectores. Por cada grupo de edad hay 6 trazas (línea, hombres, mujeres, texto de brecha, barra de hombres, barra de mujeres). El menú (`updatemenus`) muestra las 6 del grupo elegido, cambia el subtítulo y reordena los sectores (`categoryarray`).
-- **Cursor:** ingreso por hora, ingreso mensual promedio, brecha frente a los hombres del sector, % de mujeres en el sector y tamaño de la muestra.
-- **Ejes fijos.** No cambian al cambiar de grupo de edad, para que la comparación sea justa.
-- **Fuente:** Inter / Segoe UI (tipografía de pantalla) en tamaño 14, para que se lea bien proyectado.
-- **Muestra mínima.** Solo sectores con al menos 50 hombres y 50 mujeres en la muestra para ese grupo. Con menos, la cifra cambia demasiado de una muestra a otra.
-- **Aporte de la interactividad.** Con 18 sectores × 5 grupos, la versión estática necesitaría 90 etiquetas. El hover da el detalle de cada sector y el menú permite ubicar el caso propio.
-- **Pregunta probable: "¿por qué en salud la brecha es tan grande (42,3 %)?"** Respuesta: el dato no separa profesiones. En salud trabajan médicos y enfermeras, y la composición puede explicar parte de la diferencia, pero los datos no permiten afirmarlo.
+**Por qué dos y por qué no son redundantes.** Usan los mismos datos, pero responden preguntas distintas:
+
+| | Interactivo 1: panorama (dispersión) | Interactivo 2: ranking por edad (pesas) |
+|---|---|---|
+| Pregunta | ¿Cuánto paga cada sector a hombres y mujeres, cuánta gente emplea y dónde está la brecha? | ¿Qué sector tiene más brecha y cómo cambia el orden con la edad? |
+| Qué se ve bien | Nivel de ingreso del sector + tamaño + brecha a la vez | Comparar brechas fila por fila y entre grupos de edad |
+| Qué se ve mal | Comparar brechas una por una | Cuánta gente hay en cada sector (está aparte, en el panel de barras) |
+| Edad | Todas las edades (sin menú) | Menú: todas, 18–28, 29–40, 41–59, 60 y más |
+| Archivo | `python/html/Equipo3_Proyecto3_Plotly_Panorama_Sectores.html` | `python/html/Equipo3_Proyecto3_Plotly_Sectores_por_Edad.html` |
+
+**Interactivo 1: dispersión.**
+- **Ejes:** X = ingreso por hora de los hombres; Y = ingreso por hora de las mujeres (en el título de cada eje, la palabra *Hombres* o *Mujeres* va en su color).
+- **Línea negra de igualdad** y zona sombreada debajo: ahí las mujeres reciben menos. Las **líneas punteadas** de 10, 20, 30 y 40 % permiten leer la brecha sin calcular: salud queda casi sobre la de 40 %.
+- **Tamaño** = ocupados con educación superior en el sector (promedio mensual). **Color:** rojo (las mujeres reciben menos) o gris (igual o más).
+- **Zoom:** los ejes empiezan en $ 8.000 y no en 0, porque ningún sector está por debajo. Antes empezaban en 0 y todo quedaba amontonado en una esquina. Además se quitó la escala 1:1 para que el gráfico use todo el ancho.
+- **Etiquetas fijas** solo en los 9 sectores que se comentan (con una línea corta al círculo); el resto se ve con el cursor.
+- **Cifras para decir:** 14 de 18 sectores debajo de la línea. Comercio es el más grande (1,23 millones de personas al mes) y tiene 24,8 %. Salud: 905 mil personas, 76 % mujeres, 42,3 % ($ 30.568 frente a $ 17.642 por hora). Pagar más no implica menos brecha: información y comunicaciones 18,4 %, educación 13,2 %, administración pública −3,4 % (las mujeres reciben más).
+
+**Interactivo 2: pesas (dumbbell) + barras.**
+- Cada fila es un sector: punto azul (hombres) y ocre (mujeres) unidos por una línea; a la derecha, "x % menos" (rojo) o "x % más" (gris). El panel derecho tiene barras apiladas con los ocupados por sexo.
+- **Orden por grupo de edad.** En cada grupo, los sectores se ordenan por su propia brecha: arriba la más alta y bajando. Una **línea punteada** separa "las mujeres reciben menos" (arriba) de "igual o más" (abajo); debajo de la línea, la ventaja de las mujeres crece hacia la última fila.
+  - Todas las edades: de salud (42,3 % menos) a minería (29,2 % más).
+  - 18–28: de comercio (20,0 % menos) a electricidad, gas y agua (21,9 % más; pocas mujeres en la muestra).
+- **Cómo se logró (pregunta técnica probable).** Cada grupo de edad tiene sus propias posiciones verticales (0, 1, 2…) ya ordenadas por brecha. El menú (`updatemenus`, método `update`) cambia qué 6 trazas se ven, el subtítulo, los nombres de las filas (`tickvals`/`ticktext`) y la línea separadora (`shapes`). La primera versión usaba un eje de categorías compartido y `categoryarray`, pero Plotly conservaba el orden de la primera vista. Lo comprobamos simulando el clic del menú con JavaScript y tomando capturas.
+- **Ejes horizontales fijos** entre grupos, para que la comparación sea justa (por eso con 18–28 todos los puntos se corren a la izquierda: los jóvenes ganan menos, hombres y mujeres).
+
+**Común a los dos.**
+- **Cursor:** ingreso por hora de cada sexo, ingreso mensual, brecha, "por cada $ 100…", % de mujeres en el sector y tamaño de la muestra.
+- **Muestra mínima:** 50 hombres y 50 mujeres por sector y grupo.
+- **Fuente** Inter / Segoe UI de tamaño 14, para que se lea bien proyectado.
+- **Pregunta probable: "¿por qué en salud la brecha es tan grande?"** El dato no separa profesiones. En salud trabajan médicos y enfermeras, y la composición puede explicar parte de la diferencia, pero los datos no permiten afirmarlo.
 
 ### 1.7 Qué NO hicimos y por qué
 
