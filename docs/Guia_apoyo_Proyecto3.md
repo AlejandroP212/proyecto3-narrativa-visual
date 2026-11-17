@@ -10,15 +10,16 @@
 
 | Sección | Qué hace | Cómo lo dices en la sustentación |
 |---|---|---|
-| Instalación | `%pip install` de las librerías | "Para que corra igual en Colab y en VS Code." |
+| Instalación | `%pip install` de las librerías | "En VS Code hace falta la primera vez; en Colab no es obligatoria porque ya trae las librerías, pero no hace daño y así 'Ejecutar todas' funciona igual en los dos." |
 | 1. Audiencia | Tabla audiencia → necesidad → pregunta y reparto entre herramientas | "Cada herramienta responde una parte distinta: Power BI el panorama, Python la distribución y la edad, Plotly los sectores, R el territorio." |
 | 2. Rutas | Busca el zip en `.` o `..`; si no está (Colab), lo baja de GitHub | "Rutas relativas: corre desde el repo sin cambiar nada." |
-| Ingredientes | Colores, categorías, `miles()` y `pct()` | "Todo lo que se repite está definido una vez: si cambia un color, cambia en todos los gráficos." |
+| Configuración general | Colores, categorías, `miles()` y `pct()` | "Todo lo que se repite está definido una vez: si cambia un color, cambia en todos los gráficos." |
 | Carga | Lee los 14 CSV dentro del zip, solo las columnas necesarias | "No descomprimimos ni modificamos el original." |
 | Unión | `merge(..., validate="1:1")` con la llave de 5 columnas | "Si hubiera duplicados, pandas se detiene. Incluir HOGAR evita el error que tuvimos en el P1." |
 | Variables y filtros | Convierte tipos, calcula el ingreso por hora y filtra | "De 206.712 ocupados quedan 76.488 con educación superior, ingreso y horas." |
-| Cómo se calculan | Funciones ponderadas, brecha y bootstrap | Ver 1.3 |
-| Cifras de control | Tabla que debe coincidir con Power BI | "18,5 % mensual y 13,7 % por hora; Power BI da lo mismo." |
+| Quién queda fuera | Cuenta los excluidos por posición ocupacional | Ver 1.2b |
+| Cómo se calculan | Tabla "qué mide / cómo se calcula / cómo se lee" + margen de error | Ver 1.2c y 1.3 |
+| Cifras de control | Tabla que debe coincidir con Power BI + traducción a "por cada $ 100" + figura de las 500 repeticiones | "18,5 % al mes y 13,7 % por hora; Power BI da lo mismo." |
 | Composición | Por qué la brecha general es casi 0 | Ver 1.4 |
 | Gráfico 1 | Densidades por sexo y nivel | Ver 1.5 |
 | Gráfico 2 | Barras de la brecha por edad con IC | Ver 1.5 |
@@ -34,7 +35,33 @@
 - **Razón de sumas vs. promedio de razones.** Usamos Σ ingreso / Σ horas del grupo, igual que la medida DAX de Power BI. El promedio de los ingresos por hora individuales da 18,2 % porque es muy sensible a personas con muy pocas horas reportadas. La razón de sumas se lee como "por cada hora trabajada, el grupo recibe…".
 - **Educación superior = P3042 de 8 a 13.** Técnica profesional (8), tecnológica (9), universitaria (10), especialización (11), maestría (12) y doctorado (13). No incluimos normalista (7): son 277 casos y su clasificación es ambigua.
 
+### 1.2b Quién queda fuera del análisis (dilo antes de que te lo pregunten)
+
+1. **Trabajan pero no reportan ingreso mayor que 0:** 5.435 ocupados (3.983 no lo informaron y 1.452 reportaron 0); 1.535 de ellos tienen educación superior. La mayoría (3.250) son *trabajadores familiares sin remuneración*. **Ejemplo:** una contadora graduada que ayuda en el negocio de su familia sin sueldo.
+2. **No trabajan:** la tabla *Ocupados* solo trae a quien trabajó. **Ejemplos:** una tecnóloga recién graduada que está buscando su primer empleo, o una profesional dedicada al cuidado de su hogar.
+
+**Por qué importa:** la brecha compara a mujeres y hombres **que ya tienen trabajo remunerado**. No dice si a las mujeres les cuesta más conseguir empleo; esa sería otra brecha (de desempleo o de participación) que estos datos no incluyen.
+
+### 1.2c Cómo traducir las cifras a palabras simples (para la presentación)
+
+| Si la cifra es… | Se dice así |
+|---|---|
+| Brecha de 13,7 % por hora | "Por cada $ 100 que recibe por hora un hombre con educación superior, una mujer con el mismo nivel recibe $ 86,30." |
+| Brecha de 18,5 % al mes | "Por cada $ 100 al mes de un hombre, una mujer recibe $ 81,50." |
+| Diferencia entre 7,4 % y 14,1 % | "6,7 **puntos porcentuales** más" (no "6,7 % más"). |
+| Brecha negativa (−3,4 %) | "En ese sector las mujeres reciben 3,4 % **más** por hora." |
+| Intervalo de 11,2 % a 16,3 % | "Aunque la muestra fuera otra, la brecha estaría entre 11 % y 16 %; nunca cerca de 0." |
+| Intervalo que incluye el 0 | "Con estos datos no se puede afirmar que haya brecha." |
+
+Siempre en tres pasos: **qué mide** (ingreso mensual o por hora), **cómo se mide** (comparando el promedio de hombres y mujeres con el mismo nivel) y **qué significa** (la frase de los $ 100).
+
+**Horas:** los hombres con educación superior trabajan en promedio 43,7 horas a la semana y las mujeres 41,3. Por eso la brecha mensual (18,5 %) es mayor que la brecha por hora (13,7 %): 4,8 puntos de diferencia coinciden con tener menos horas pagadas, pero la mayor parte se mantiene por hora.
+
 ### 1.3 El bootstrap (la pregunta técnica más probable)
+
+**En una frase:** "Simulamos repetir la encuesta 500 veces con las mismas viviendas, recalculamos la brecha cada vez y nos quedamos con el rango donde cae el 95 % de los resultados."
+
+**Figura de apoyo en el notebook:** el histograma de las 500 brechas simuladas. Casi todas caen entre 11 % y 16 % y ninguna se acerca a 0. Si te piden explicarlo, abre esa figura.
 
 **Qué es.** Una forma de medir cuánto cambiaría la cifra si se hubiera tomado otra muestra. Se repite el cálculo 500 veces "remuestreando" las viviendas y se mira dónde cae el 95 % de los resultados. Ese rango es el intervalo de confianza (IC).
 
@@ -51,8 +78,10 @@
 
 ### 1.4 El efecto de composición
 
-- Entre **todos** los ocupados, las mujeres ganan por hora un 3,8 % *más* que los hombres. ¿Contradice la historia? No.
-- El 44,1 % de las mujeres ocupadas tiene educación superior, frente al 29,7 % de los hombres, y la educación superior se asocia con más ingreso. Al mezclar niveles, las mujeres "suben" el promedio por tener más títulos.
+- **Sin** educación superior las mujeres reciben 11,3 % menos por hora y **con** educación superior 13,7 % menos. Pero **todos juntos**, las mujeres reciben 3,8 % *más*. ¿Contradice la historia? No.
+- El 44,1 % de las mujeres ocupadas tiene educación superior, frente al 29,7 % de los hombres, y ese grupo gana mucho más por hora ($ 18.553 las mujeres y $ 21.491 los hombres, frente a $ 7.142 y $ 8.049 sin educación superior). Al mezclar niveles, las mujeres "suben" el promedio por tener más títulos.
+- **Ejemplo para decirlo:** "Si en un salón casi todas las mujeres son profesionales y casi todos los hombres no, el promedio de las mujeres sale más alto aunque cada profesional gane menos que su colega hombre."
+- Nombre técnico, por si lo preguntan: **paradoja de Simpson**.
 - Al comparar personas con el **mismo** nivel, aparece la brecha. Por eso la historia se cuenta siempre a igual nivel educativo.
 - Esto también explica por qué la tarjeta general de Power BI (8,6 % mensual) es menor que la brecha de cada nivel.
 
@@ -78,9 +107,12 @@
 
 ### 1.6 Plotly
 
-- **Construcción.** Un `go.Scatter` por grupo de edad (5 trazas) más la línea de igualdad. El menú (`updatemenus`) cambia qué traza es visible y actualiza el subtítulo.
-- **Por qué los ejes son fijos y la escala 1:1** (`scaleanchor`). Para comparar grupos sin que el gráfico "mienta" al cambiar de opción, y para que la diagonal sea realmente de 45°.
-- **Colores.** Rojo si las mujeres reciben menos y gris si reciben igual o más. No se usa el azul de "Hombre" para no confundir.
+- **Tipo de gráfico: "pesas" (dumbbell) + barras.** Cada fila es un sector. A la izquierda, un punto azul (hombres) y uno ocre (mujeres) con su ingreso por hora, unidos por una línea: mientras más larga, mayor la diferencia. A la derecha de cada fila, el texto "42,3 % menos" (rojo) o "3,4 % más" (gris). El panel derecho tiene barras apiladas con cuántos ocupados con educación superior hay en el sector, por sexo (tamaño y composición).
+- **Por qué cambiamos del gráfico de dispersión a este.** En la dispersión los 18 puntos quedaban amontonados y había que adivinar qué sector era cada uno. Aquí cada sector tiene su nombre escrito, el orden (de mayor a menor brecha) ya cuenta la historia y se ve de inmediato quién gana más.
+- **Construcción.** `make_subplots` con dos paneles que comparten el eje de sectores. Por cada grupo de edad hay 6 trazas (línea, hombres, mujeres, texto de brecha, barra de hombres, barra de mujeres). El menú (`updatemenus`) muestra las 6 del grupo elegido, cambia el subtítulo y reordena los sectores (`categoryarray`).
+- **Cursor:** ingreso por hora, ingreso mensual promedio, brecha frente a los hombres del sector, % de mujeres en el sector y tamaño de la muestra.
+- **Ejes fijos.** No cambian al cambiar de grupo de edad, para que la comparación sea justa.
+- **Fuente:** Inter / Segoe UI (tipografía de pantalla) en tamaño 14, para que se lea bien proyectado.
 - **Muestra mínima.** Solo sectores con al menos 50 hombres y 50 mujeres en la muestra para ese grupo. Con menos, la cifra cambia demasiado de una muestra a otra.
 - **Aporte de la interactividad.** Con 18 sectores × 5 grupos, la versión estática necesitaría 90 etiquetas. El hover da el detalle de cada sector y el menú permite ubicar el caso propio.
 - **Pregunta probable: "¿por qué en salud la brecha es tan grande (42,3 %)?"** Respuesta: el dato no separa profesiones. En salud trabajan médicos y enfermeras, y la composición puede explicar parte de la diferencia, pero los datos no permiten afirmarlo.
