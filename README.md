@@ -51,7 +51,7 @@ jupyter nbconvert --to notebook --execute --inplace python/Equipo3_Proyecto3_Ana
 ### 2. R (mapa)
 Requiere R ≥ 4.4 (probado con R 4.6.2) y RStudio. **No necesita RTools.**
 ```r
-install.packages(c("sf", "ggplot2", "dplyr", "readr", "classInt", "tmap", "rmarkdown", "knitr"))
+install.packages(c("sf", "ggplot2", "dplyr", "readr", "classInt", "ggspatial", "tmap", "rmarkdown", "knitr"))
 ```
 - Abre `r/Equipo3_Proyecto3_Mapa.Rmd` y haz **Knit** (o ejecuta `rmarkdown::render("r/Equipo3_Proyecto3_Mapa.Rmd")`).
 - Usa `datos/originales/cartografia/` y `datos/procesados/brecha_departamento.csv`, y exporta el mapa a `r/salidas/`.
