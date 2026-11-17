@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Anexo de uso de IA · Equipo 3 · Proyecto 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+  @page { size: Letter; margin: 1.3cm 1.5cm; }
+  :root { --ink: #0f1f30; --ink-2: #46566a; --muted: #6b7a8c; --rule: #dfe3e8; --panel: #f2f4f6; --brecha: #AD4A3C; }
+  body { font-family: "Archivo", "Segoe UI", Arial, sans-serif; color: var(--ink); font-size: 9.6pt; line-height: 1.36; margin: 0; background: #fff; }
+  main { max-width: 19cm; margin: 0 auto; }
+  h1 { font-size: 15pt; font-weight: 780; font-stretch: 112%; margin: 0 0 .1cm; }
+  .sub { color: var(--muted); margin: 0 0 .3cm; font-size: 9pt; }
+  h2 { font-size: 10.5pt; font-weight: 700; margin: .32cm 0 .12cm; }
+  p { margin: 0 0 .15cm; }
+  table { border-collapse: collapse; width: 100%; font-size: 8.8pt; }
+  th { text-align: left; color: var(--muted); font-weight: 650; border-bottom: 1.2pt solid var(--ink); padding: 2.5pt 4pt; }
+  td { border-bottom: .5pt solid var(--rule); padding: 2.5pt 4pt; vertical-align: top; }
+  ul { margin: 0; padding-left: .45cm; }
+  li { margin-bottom: 1.5pt; }
+  q { font-style: italic; color: var(--ink-2); }
+  .box { background: var(--panel); border-left: 3pt solid var(--brecha); padding: 4pt 7pt; margin-top: .15cm; }
+</style>
+</head>
+<body>
+<main>
+<h1>Anexo técnico: uso de inteligencia artificial</h1>
+<p class="sub">Proyecto 3 · Narrativa visual integrada · Equipo 3: Alejandro Pardo Costo y Juan Tomás Rincón Pinzón · Visualización I, Universidad Externado de Colombia · Noviembre de 2026</p>
+
+<h2>1. Herramientas y propósito</h2>
+<table>
+  <tr><th style="width:24%">Componente</th><th style="width:22%">Herramienta</th><th>Para qué se usó</th></tr>
+  <tr><td>Python (notebook y Plotly)</td><td>Claude Code (Claude Opus 5.5)</td><td>Proponer la estructura del notebook, escribir y depurar código de pandas, Seaborn y Plotly, y redactar borradores de las lecturas en lenguaje sencillo.</td></tr>
+  <tr><td>R (mapa)</td><td>Claude Code (Claude Opus 5.5)</td><td>Escribir el R Markdown con <code>sf</code>, <code>ggplot2</code>, <code>ggspatial</code> y <code>tmap</code>, y revisar la unión espacial y la clasificación.</td></tr>
+  <tr><td>Presentación y documentación</td><td>Claude Code (Claude Opus 5.5)</td><td>Maquetar la presentación HTML, redactar borradores del LEEME, las definiciones compartidas y el guion de exposición.</td></tr>
+  <tr><td>Power BI</td><td>Por confirmar (Juan Tomás)</td><td>Por confirmar: herramienta y uso en las correcciones del tablero y las medidas DAX.</td></tr>
+</table>
+
+<h2>2. Prompts relevantes (resumidos)</h2>
+<ul>
+  <li><q>Hazme propuestas de audiencia ciudadana y pregunta que se relacionen con el Proyecto 1 (brecha salarial, GEIH 2026)</q>. Elegimos la propuesta de mujeres de 18 a 28 años con educación superior.</li>
+  <li><q>Crea el notebook bien documentado; explica cada cifra con qué mide, cómo se mide y qué significa, con ejemplos como "por cada $ 100…"</q>.</li>
+  <li><b>Paleta de colores:</b> <q>Los colores del P1 (#1F5FA8 y #7B3FA0) se parecen mucho; propón una paleta accesible para hombres, mujeres y brecha</q>. La IA mostró que esos dos colores tenían un contraste de 1,1:1 entre sí y no se distinguían con deuteranopia. Adoptamos azul <code>#1F4E79</code> (hombres), ocre <code>#B8862B</code> (mujeres) y rojo teja <code>#AD4A3C</code> (brecha), usados igual en las tres herramientas.</li>
+  <li><q>La gráfica interactiva se ve muy apretada; mejora el zoom, los textos de los ejes y que los sectores se ordenen por brecha en cada grupo de edad</q>.</li>
+  <li><q>Haz el mapa en R por departamento, con escala, norte, fuente y que se vea qué departamentos no son concluyentes</q>.</li>
+</ul>
+
+<h2>3. Revisión crítica: qué verificamos y qué corregimos</h2>
+<ul>
+  <li><b>Cifras verificadas contra los datos.</b> Cada número citado en el notebook, el mapa y la presentación se volvió a calcular. La IA escribió en un borrador porcentajes de composición (35,1 % y 22,6 %) que no salían de los datos; los valores reales son 44,1 % y 29,7 %. También se corrigieron intervalos de confianza redondeados mal y se eliminó una afirmación sobre el salario mínimo que no se podía comprobar.</li>
+  <li><b>Errores de visualización detectados al revisar las salidas.</b> La curva de densidad de los hombres universitarios salía plana por un valor extremo (más de $ 12 millones por hora), así que se limitó el eje a $ 60 mil y se dejó documentado. El menú del Plotly no reordenaba los sectores al cambiar de edad: lo comprobamos con capturas y se reescribió el eje.</li>
+  <li><b>Decisiones metodológicas propias.</b> Comparar por hora y dentro del mismo nivel educativo, marcar en gris los departamentos no concluyentes y señalar los 9 departamentos con muestra solo urbana fueron decisiones del equipo, revisadas en los microdatos.</li>
+  <li><b>Lenguaje.</b> Se quitaron frases causales ("la educación causa…") y títulos con conclusiones en los gráficos, siguiendo la retroalimentación del Proyecto 1.</li>
+</ul>
+<div class="box">Todo el código fue ejecutado y revisado por el equipo; ambos integrantes pueden explicar cada transformación, cálculo y decisión gráfica. La IA no tuvo acceso a datos distintos de los microdatos públicos de la GEIH y la cartografía del DANE.</div>
+</main>
+</body>
+</html>

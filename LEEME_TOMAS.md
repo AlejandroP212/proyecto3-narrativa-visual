@@ -17,7 +17,7 @@
 - **Proyecto 3 = narrativa ciudadana** que integra Power BI (tú), Python y R (Alejandro). Vale 6 de 50 puntos para Power BI: *"correcciones justificadas; funcionalidad, modelado y DAX pertinentes; integración al mensaje"*.
 - **Audiencia:** mujeres de 18 a 28 años que terminan o acaban de terminar un técnico, tecnológico o carrera y van a buscar su primer empleo.
 - **Pregunta:** ¿Qué diferencias de ingreso laboral se observan entre mujeres y hombres con educación superior en Colombia (enero–julio 2026) y cómo varían según la edad y el departamento?
-- **Gran Idea (borrador):** el título se asocia con más ingresos para las mujeres, pero no con ingresos iguales. Al empezar (18–28 años) reciben por hora cerca de un 7 % menos que los hombres con su mismo nivel, y entre los 29 y 40 años cerca de un 14 % menos.
+- **Gran Idea (final):** el título no iguala el pago. Con el mismo nivel educativo, las mujeres reciben 13,7 % menos por hora que los hombres. Al comenzar la vida laboral (18 a 28 años) la diferencia es menor, 7,4 %, pero en el grupo de 29 a 40 años es casi el doble y aparece en casi todos los sectores y en la mayoría de los departamentos.
 - **Qué muestra cada herramienta (para no repetir gráficos):**
 
 | Herramienta | Papel en la historia |
@@ -148,6 +148,30 @@ Si no coinciden, lo más probable es que la categoría "Superior" incluya otro r
 
 - **Solo tú modificas `powerbi/`.** El `.pbix` es binario y no se puede fusionar, así que Alejandro no lo toca.
 - Si `git push` falla porque hay cambios nuevos, primero haz `git pull` y luego vuelve a hacer `git push`.
+
+## Estado de lo demás (actualizado por Alejandro, 17-nov)
+
+Ya están en el repo:
+- el notebook con los dos interactivos de Plotly;
+- el mapa en R;
+- la presentación (`presentacion/Equipo3_Proyecto3_Presentacion.html` y su PDF);
+- el anexo de IA;
+- el guion de la sustentación (`docs/Guion_exposicion.md`).
+
+**Tu parte en la presentación:**
+- La **diapositiva 4 (Panorama, Power BI)** muestra la imagen `presentacion/img/powerbi_pagina1.png`. Mientras no exista, aparece un recuadro de "Captura pendiente".
+  - Exporta la página principal del tablero en PNG, horizontal y legible, con ese nombre exacto.
+  - Si quieres que se vea otra página, avísale a Alejandro.
+- Las cifras de esa diapositiva salen de Python y tu tablero debe mostrar lo mismo: brecha mensual de **8,6 %** para todos los ocupados y de **18,5 %** para educación superior.
+
+**Tu parte en la exposición** (ver `docs/Guion_exposicion.md`):
+- Presentas las diapositivas **1 a 4** (portada, audiencia, Gran Idea y Power BI) y la **9** (síntesis y mensaje final), en unos 4 minutos y 15 segundos.
+- En la presentación, la tecla **N** abre las notas de cada diapositiva.
+
+**Anexo de IA:** en `docs/Equipo3_Proyecto3_Anexo_IA.html`, la fila "Power BI" dice "Por confirmar".
+- Escribe ahí qué herramienta de IA usaste y para qué, en una línea, o dile a Alejandro y él la cambia.
+- Si no usaste IA, escribe "No se usó IA".
+- Después hay que regenerar el PDF y correr `python scripts/armar_entregables.py`. Eso lo hace Alejandro.
 
 ## 5. Para completar (Tomás)
 

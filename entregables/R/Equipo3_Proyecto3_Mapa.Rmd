@@ -1,0 +1,597 @@
+---
+title: "Brecha de ingreso por hora entre mujeres y hombres con educación superior, por departamento"
+subtitle: "Proyecto 3 · Narrativa visual integrada · Mapa temático en R"
+author: "Equipo 3: Alejandro Pardo Costo y Juan Tomás Rincón Pinzón"
+date: "Noviembre de 2026"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    number_sections: true
+    theme: flatly
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+# Configuración global de los chunks
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  dpi = 150
+)
+```
+
+# Qué muestra este documento
+
+Este documento construye el mapa del Proyecto 3. El mapa responde a la parte territorial de nuestra pregunta:
+
+> ¿Qué diferencias de ingreso laboral se observan entre mujeres y hombres con educación superior en Colombia (enero–julio 2026) y cómo varían según la edad y **el departamento**?
+
+- **Qué se pinta:** la **brecha de ingreso por hora**. Es el porcentaje que una mujer con educación superior recibe de menos, por cada hora trabajada, frente a un hombre con educación superior del mismo departamento.
+  Por ejemplo, una brecha de 20 % significa que **por cada $ 100 que recibe por hora un hombre, una mujer recibe $ 80**.
+- **De dónde sale la cifra:** del notebook de Python (`python/Equipo3_Proyecto3_Analisis.ipynb`, sección 5). Ahí se calcula con los microdatos de la GEIH y el factor de expansión, y se exporta a `datos/procesados/brecha_departamento.csv`.
+  Este documento no recalcula nada, solo lo lleva al mapa.
+- **Unidad territorial:** el **departamento** (33 unidades, contando Bogotá). La GEIH no permite dar cifras confiables por municipio, por eso no bajamos a ese nivel.
+
+# Paquetes
+
+```{r paquetes}
+library(sf)         # leer y transformar la cartografía
+library(dplyr)      # preparar y unir tablas
+library(readr)      # leer el CSV que sale de Python
+library(ggplot2)    # mapa estático
+library(ggspatial)  # barra de escala y flecha de norte
+library(classInt)   # clasificación de la variable en intervalos
+library(tmap)       # versión interactiva del mapa
+```
+
+Si falta alguno, se instala una sola vez con:
+`install.packages(c("sf", "dplyr", "readr", "ggplot2", "ggspatial", "classInt", "tmap", "rmarkdown", "knitr"))`
+
+# Rutas
+
+El documento está en la carpeta `r/` del repositorio. Al hacer **Knit**, RStudio trabaja desde esa carpeta, así que los datos quedan un nivel arriba (`../datos`). Si alguien lo ejecuta desde la raíz del repositorio, los datos están en `./datos`. La siguiente línea revisa cuál de los dos casos aplica, para no depender de `setwd()`.
+
+```{r rutas}
+BASE <- if (dir.exists("../datos")) ".." else "."
+
+RUTA_MUNICIPIOS <- file.path(BASE, "datos/originales/cartografia/MGN_MPIO_POLITICO.shp")
+RUTA_BRECHA     <- file.path(BASE, "datos/procesados/brecha_departamento.csv")
+CARPETA_SALIDAS <- file.path(BASE, "r/salidas")
+dir.create(CARPETA_SALIDAS, showWarnings = FALSE)
+
+file.exists(c(RUTA_MUNICIPIOS, RUTA_BRECHA))
+```
+
+# Cartografía: de municipios a departamentos
+
+## Lectura y sistema de coordenadas
+
+Usamos el **Marco Geoestadístico Nacional (MGN) del DANE**, capa municipal `MGN_MPIO_POLITICO`, que se entregó en la sesión 02 de R.
+
+```{r leer-municipios}
+municipios <- st_read(RUTA_MUNICIPIOS, quiet = TRUE)
+
+nrow(municipios)          # número de municipios
+st_crs(municipios)$epsg   # sistema de coordenadas original
+```
+
+La capa trae `r nrow(municipios)` municipios en coordenadas geográficas WGS84 (EPSG:4326), es decir, en grados de latitud y longitud.
+
+Para dibujar el mapa la pasamos a **MAGNA-SIRGAS / Origen Nacional (EPSG:9377)**. Es la proyección plana oficial de Colombia: las coordenadas quedan en metros, el país no sale estirado y la barra de escala mide bien.
+
+```{r reproyectar}
+municipios_9377 <- municipios %>%
+  st_transform(crs = 9377) %>%
+  st_make_valid()    # corrige posibles polígonos mal cerrados antes de unirlos
+
+st_crs(municipios_9377)$epsg
+```
+
+## Unión de municipios por departamento
+
+La capa no trae departamentos, pero cada municipio tiene su código de departamento (`DPTO_CCDGO`). Al agrupar por ese código y usar `summarise()`, `sf` **une las geometrías** de los municipios y borra los límites internos. Así quedan los 33 departamentos.
+
+Después simplificamos los bordes (`st_simplify`) con una tolerancia de 500 metros. Así el archivo pesa menos y el mapa interactivo carga rápido; a escala nacional la diferencia no se nota. Usamos `preserveTopology = TRUE` para que ninguna isla pequeña (San Andrés, Providencia) desaparezca al simplificar.
+
+```{r disolver}
+departamentos <- municipios_9377 %>%
+  group_by(DPTO_CCDGO) %>%
+  summarise(n_municipios = n(), .groups = "drop") %>%
+  st_simplify(dTolerance = 500, preserveTopology = TRUE)
+
+nrow(departamentos)
+sum(departamentos$n_municipios)   # deben sumar los 1.121 municipios
+```
+
+## Nombres para mostrar
+
+Los nombres de la capa vienen en mayúsculas y algunos sin tilde ("QUINDIO"), así que escribimos una tabla corta con los nombres como los leería la audiencia. También marcamos si la GEIH en ese departamento **solo encuestó zonas urbanas**. Lo revisamos en los microdatos, con la variable `CLASE` de la tabla de Características generales (1 = cabecera municipal, 2 = centros poblados y rural disperso): en Arauca, Casanare, Putumayo, San Andrés, Amazonas, Guainía, Guaviare, Vaupés y Vichada todos los hogares encuestados están en cabeceras municipales (`CLASE = 1`), no en zona rural.
+
+```{r nombres}
+nombres <- tribble(
+  ~DPTO_CCDGO, ~departamento,         ~solo_urbana,
+  "05", "Antioquia",             FALSE,
+  "08", "Atlántico",             FALSE,
+  "11", "Bogotá",                FALSE,
+  "13", "Bolívar",               FALSE,
+  "15", "Boyacá",                FALSE,
+  "17", "Caldas",                FALSE,
+  "18", "Caquetá",               FALSE,
+  "19", "Cauca",                 FALSE,
+  "20", "Cesar",                 FALSE,
+  "23", "Córdoba",               FALSE,
+  "25", "Cundinamarca",          FALSE,
+  "27", "Chocó",                 FALSE,
+  "41", "Huila",                 FALSE,
+  "44", "La Guajira",            FALSE,
+  "47", "Magdalena",             FALSE,
+  "50", "Meta",                  FALSE,
+  "52", "Nariño",                FALSE,
+  "54", "Norte de Santander",    FALSE,
+  "63", "Quindío",               FALSE,
+  "66", "Risaralda",             FALSE,
+  "68", "Santander",             FALSE,
+  "70", "Sucre",                 FALSE,
+  "73", "Tolima",                FALSE,
+  "76", "Valle del Cauca",       FALSE,
+  "81", "Arauca",                TRUE,
+  "85", "Casanare",              TRUE,
+  "86", "Putumayo",              TRUE,
+  "88", "San Andrés y Providencia", TRUE,
+  "91", "Amazonas",              TRUE,
+  "94", "Guainía",               TRUE,
+  "95", "Guaviare",              TRUE,
+  "97", "Vaupés",                TRUE,
+  "99", "Vichada",               TRUE
+)
+
+departamentos <- departamentos %>% left_join(nombres, by = "DPTO_CCDGO")
+sum(is.na(departamentos$departamento))   # 0 = todos los códigos tienen nombre
+```
+
+# Datos de la brecha (salida del notebook)
+
+El CSV tiene una fila por departamento. Las columnas que usamos son:
+
+| Columna | Qué es |
+|---|---|
+| `brecha_hora` | Brecha de ingreso por hora, en %: (hombres − mujeres) / hombres × 100 |
+| `ic_inf`, `ic_sup` | Margen de error: intervalo de confianza del 95 % (bootstrap de 500 repeticiones por vivienda) |
+| `concluyente` | `TRUE` si el intervalo no incluye el 0, es decir, si podemos afirmar que hay diferencia |
+| `hora_hombres`, `hora_mujeres` | Ingreso laboral promedio por hora, en pesos |
+| `n_hombres`, `n_mujeres` | Personas encuestadas (sin expandir) en la muestra de cada sexo |
+| `precision_dane` | Calidad de la estimación según el coeficiente de variación (criterio del DANE) |
+
+El código de departamento se lee como **texto**. Si se leyera como número, "05" (Antioquia) quedaría como 5 y no encontraría su pareja en la cartografía.
+
+```{r leer-brecha}
+brecha <- read_csv(RUTA_BRECHA, col_types = cols(DPTO = col_character()))
+
+nrow(brecha)
+head(brecha, 3)
+```
+
+# Unión de la tabla con el mapa
+
+Unimos por el código de departamento y verificamos la unión **en los dos sentidos**:
+
+- ningún departamento del mapa se queda sin dato;
+- ningún dato se queda sin departamento.
+
+```{r unir}
+dptos_mapa <- departamentos %>%
+  left_join(brecha, by = c("DPTO_CCDGO" = "DPTO"))
+
+sin_dato  <- anti_join(st_drop_geometry(departamentos), brecha, by = c("DPTO_CCDGO" = "DPTO"))
+sin_mapa  <- anti_join(brecha, st_drop_geometry(departamentos), by = c("DPTO" = "DPTO_CCDGO"))
+
+nrow(sin_dato)   # departamentos del mapa sin brecha
+nrow(sin_mapa)   # filas del CSV sin polígono
+
+stopifnot(nrow(sin_dato) == 0, nrow(sin_mapa) == 0)
+```
+
+Los 33 departamentos encontraron su pareja. Si la verificación fallara, `stopifnot` detendría el documento en vez de dibujar un mapa con huecos.
+
+# Clasificación de la brecha
+
+## Por qué estos cortes
+
+```{r rango}
+concluyentes <- dptos_mapa %>% filter(concluyente)
+nrow(concluyentes)
+range(concluyentes$brecha_hora)
+```
+
+Hay `r nrow(concluyentes)` departamentos con brecha concluyente y `r 33 - nrow(concluyentes)` sin brecha concluyente. Entre los concluyentes, la brecha va de `r format(round(min(concluyentes$brecha_hora), 1), nsmall = 1, decimal.mark = ",")` % a `r format(round(max(concluyentes$brecha_hora), 1), nsmall = 1, decimal.mark = ",")` %.
+
+Usamos **cortes fijos y redondos de 5 en 5: 10, 15, 20 y 25 %**.
+
+- **Son fáciles de leer** para la audiencia: "entre 15 % y 20 %" se entiende mejor que "entre 13,84 % y 16,45 %", que es lo que darían los cuantiles o *Jenks*.
+- **Sirven para comparar con el país.** La brecha nacional es 13,7 %, así que la primera clase (10–15 %) agrupa a los departamentos que están cerca del promedio nacional.
+- **No dejan clases vacías.** Ningún departamento concluyente tiene una brecha menor a 10 %, así que empezar en 0 habría gastado dos colores en clases sin departamentos.
+
+Los departamentos **no concluyentes** no entran en la escala de color, porque pintarlos con un tono de brecha sería mostrar una diferencia que los datos no sostienen. Van en **gris**, con su propia entrada en la leyenda.
+
+```{r clases}
+CORTES <- c(10, 15, 20, 25, 35)
+
+# classInt documenta los intervalos y cuenta cuántos departamentos caen en cada uno
+intervalos <- classIntervals(concluyentes$brecha_hora, style = "fixed", fixedBreaks = CORTES)
+intervalos
+
+ETIQUETAS_CLASE <- c("10 % a 15 %", "15 % a 20 %", "20 % a 25 %", "25 % o más")
+NO_CONCLUYENTE  <- "No concluyente"
+
+dptos_mapa <- dptos_mapa %>%
+  mutate(
+    clase = cut(brecha_hora, breaks = CORTES, labels = ETIQUETAS_CLASE, right = FALSE),
+    clase = as.character(clase),
+    clase = if_else(concluyente, clase, NO_CONCLUYENTE),
+    clase = factor(clase, levels = c(ETIQUETAS_CLASE, NO_CONCLUYENTE))
+  )
+
+table(dptos_mapa$clase)
+```
+
+## Colores
+
+- **Escala secuencial de un solo tono**, el rojo teja que usamos para la brecha en todo el proyecto (`#AD4A3C`): más oscuro significa una brecha más grande.
+- **No usamos una escala divergente** porque todos los valores concluyentes son positivos (las mujeres reciben menos). Una escala centrada en 0 dejaría la mitad de los colores sin uso.
+- **El gris de "no concluyente"** es más claro y no tiene tono, para que no se confunda con la clase más baja.
+
+```{r paleta}
+PALETA <- c(
+  "10 % a 15 %"    = "#F1C1AE",
+  "15 % a 20 %"    = "#DC8467",
+  "20 % a 25 %"    = "#AD4A3C",
+  "25 % o más"     = "#6E2219",
+  "No concluyente" = "#E4E4E4"
+)
+BRECHA_NACIONAL <- 13.7   # brecha por hora nacional, educación superior (notebook, sección 2)
+```
+
+# Mapa estático (ggplot2)
+
+## Preparación de etiquetas y elementos
+
+Para el mapa usamos estas funciones auxiliares:
+
+- `pct()` escribe los números como se leen en Colombia (coma decimal).
+- Las **etiquetas** solo van en los 5 departamentos con la brecha concluyente más alta y en Bogotá, que sirve de referencia. Poner las 33 haría el mapa ilegible; la tabla completa está en la sección 10.
+- El **círculo** marca los departamentos donde la GEIH solo encuestó zonas urbanas.
+
+```{r etiquetas}
+pct <- function(x, decimales = 1) {
+  paste0(format(round(x, decimales), nsmall = decimales, decimal.mark = ","), " %")
+}
+
+dptos_mapa <- dptos_mapa %>%
+  mutate(etiqueta_dato = if_else(concluyente, pct(brecha_hora), "No concluyente"))
+
+a_etiquetar <- dptos_mapa %>%
+  filter(concluyente) %>%
+  slice_max(brecha_hora, n = 5) %>%
+  bind_rows(filter(dptos_mapa, DPTO_CCDGO == "11")) %>%
+  mutate(texto = paste0(departamento, "\n", pct(brecha_hora))) %>%
+  st_point_on_surface()   # un punto dentro de cada departamento
+
+solo_urbana <- dptos_mapa %>%
+  filter(solo_urbana) %>%
+  st_point_on_surface()
+
+a_etiquetar$departamento
+```
+
+San Andrés queda a unos 700 km de la costa. Si se dibuja en su posición real, el mapa se encoge para que quepa todo. Por eso el continente se dibuja solo y el archipiélago va en un **recuadro aparte** (a otra escala).
+
+```{r extension}
+continente <- dptos_mapa %>% filter(DPTO_CCDGO != "88")
+caja <- st_bbox(continente)
+ancho <- caja["xmax"] - caja["xmin"]
+alto  <- caja["ymax"] - caja["ymin"]
+```
+
+Las etiquetas de Guaviare, Casanare y Meta caben dentro del departamento. En Guaviare y Casanare las bajamos un poco para no tapar el círculo de "solo urbana".
+
+Caldas, Quindío y Bogotá son pequeños, así que sus etiquetas van a la izquierda, sobre el océano Pacífico, con una línea que las une a su departamento. Las posiciones se escriben como fracción del ancho y del alto del mapa (0 = borde izquierdo o inferior, 1 = borde derecho o superior).
+
+```{r posiciones}
+posiciones <- tribble(
+  ~DPTO_CCDGO, ~fx,  ~fy,
+  "17",        0.07, 0.64,   # Caldas
+  "63",        0.07, 0.53,   # Quindío
+  "11",        0.07, 0.43    # Bogotá
+)
+
+coordenadas <- st_coordinates(a_etiquetar)
+a_etiquetar <- a_etiquetar %>%
+  mutate(x = coordenadas[, "X"], y = coordenadas[, "Y"]) %>%
+  st_drop_geometry() %>%
+  left_join(posiciones, by = "DPTO_CCDGO") %>%
+  mutate(
+    afuera = !is.na(fx),
+    x_etiqueta = if_else(afuera, caja["xmin"] + fx * ancho, x),
+    y_etiqueta = case_when(
+      afuera      ~ caja["ymin"] + fy * alto,
+      solo_urbana ~ y - 0.035 * alto,   # baja la etiqueta para no tapar el círculo
+      TRUE        ~ y
+    )
+  )
+```
+
+## Recuadro de San Andrés
+
+```{r recuadro}
+san_andres <- dptos_mapa %>% filter(DPTO_CCDGO == "88")
+
+recuadro <- ggplot(san_andres) +
+  geom_sf(aes(fill = clase), color = "grey35", linewidth = 0.3) +
+  geom_sf(data = filter(solo_urbana, DPTO_CCDGO == "88"),
+          shape = 21, size = 2.2, stroke = 0.6, fill = NA, color = "grey15") +
+  scale_fill_manual(values = PALETA, drop = FALSE, guide = "none") +
+  labs(title = paste0("San Andrés y Providencia\n", pct(san_andres$brecha_hora))) +
+  theme_void() +
+  theme(
+    plot.title = element_text(size = 7.5, hjust = 0.5, color = "grey20"),
+    panel.border = element_rect(color = "grey60", fill = NA, linewidth = 0.4),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+```
+
+## Mapa principal
+
+```{r mapa, fig.width = 8.5, fig.height = 10}
+mapa <- ggplot() +
+  geom_sf(data = continente, aes(fill = clase), color = "white", linewidth = 0.35) +
+  geom_sf(data = filter(solo_urbana, DPTO_CCDGO != "88"),
+          aes(shape = "Muestra solo de zonas urbanas"),
+          size = 2.6, stroke = 0.7, fill = NA, color = "grey15") +
+  geom_segment(
+    data = filter(a_etiquetar, afuera),
+    aes(x = x, y = y, xend = x_etiqueta, yend = y_etiqueta),
+    color = "grey30", linewidth = 0.3
+  ) +
+  geom_point(data = filter(a_etiquetar, afuera), aes(x = x, y = y), size = 0.8, color = "grey20") +
+  geom_label(
+    data = a_etiquetar,
+    aes(x = x_etiqueta, y = y_etiqueta, label = texto),
+    size = 3, lineheight = 0.9, linewidth = 0.2, label.padding = unit(0.18, "lines"),
+    fill = alpha("white", 0.92), color = "grey10"
+  ) +
+  scale_fill_manual(
+    values = PALETA, drop = FALSE,
+    name = paste0("Brecha por hora\n(nacional: ", pct(BRECHA_NACIONAL), ")")
+  ) +
+  scale_shape_manual(values = c("Muestra solo de zonas urbanas" = 21), name = NULL) +
+  annotation_custom(
+    ggplotGrob(recuadro),
+    xmin = caja["xmin"], xmax = caja["xmin"] + 0.22 * ancho,
+    ymin = caja["ymax"] - 0.20 * alto, ymax = caja["ymax"]
+  ) +
+  annotation_scale(location = "br", width_hint = 0.25, text_cex = 0.7,
+                   bar_cols = c("grey30", "white"), line_width = 0.5) +
+  annotation_north_arrow(location = "tr", which_north = "true",
+                         height = unit(1.1, "cm"), width = unit(0.8, "cm"),
+                         style = north_arrow_orienteering(text_size = 7)) +
+  coord_sf(crs = 9377, xlim = c(caja["xmin"], caja["xmax"]),
+           ylim = c(caja["ymin"], caja["ymax"]), expand = TRUE, datum = NA) +
+  labs(
+    title = "Brecha de ingreso por hora entre mujeres y hombres\ncon educación superior, por departamento",
+    subtitle = paste0(
+      "Colombia, enero–julio de 2026. Porcentaje que reciben de menos las mujeres por cada hora trabajada.\n",
+      "En gris, los departamentos donde la diferencia no es concluyente (el margen de error incluye el 0)."
+    ),
+    caption = paste0(
+      "Fuente: DANE, GEIH 2026 (enero–julio), microdatos con factor de expansión. Límites: DANE, MGN (municipios unidos por departamento).\n",
+      "Margen de error: intervalo de confianza del 95 % por bootstrap (500 repeticiones por vivienda). ",
+      "Proyección MAGNA-SIRGAS Origen Nacional (EPSG:9377).\n",
+      "Elaboración: Equipo 3, Visualización I, Universidad Externado de Colombia."
+    )
+  ) +
+  guides(
+    fill = guide_legend(order = 1, override.aes = list(color = "grey60", linewidth = 0.2)),
+    shape = guide_legend(order = 2)
+  ) +
+  theme_void(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15, color = "grey10", margin = margin(b = 6)),
+    plot.subtitle = element_text(size = 9.5, color = "grey30", lineheight = 1.15, margin = margin(b = 10)),
+    plot.caption = element_text(size = 7, color = "grey40", hjust = 0, lineheight = 1.15, margin = margin(t = 10)),
+    plot.title.position = "plot",
+    plot.caption.position = "plot",
+    legend.position = "inside",
+    legend.position.inside = c(0.02, 0.06),
+    legend.justification = c(0, 0),
+    legend.title = element_text(size = 9.5, face = "bold", lineheight = 1.1),
+    legend.text = element_text(size = 9),
+    legend.key.size = unit(0.55, "cm"),
+    legend.spacing.y = unit(0.15, "cm"),
+    plot.background = element_rect(fill = "white", color = NA),
+    plot.margin = margin(14, 14, 10, 14)
+  )
+
+mapa
+```
+
+## Cómo se lee el mapa
+
+- **El color dice cuánto menos reciben por hora las mujeres con educación superior frente a los hombres con educación superior del mismo departamento.** Cuanto más oscuro, mayor es la brecha.
+- **El gris no significa "sin brecha".** Significa que, con la muestra disponible, no podemos afirmar si hay diferencia o no: el margen de error va desde valores negativos hasta positivos.
+- **El círculo** advierte que, en ese departamento, la cifra representa solo a las personas que viven en las cabeceras municipales.
+
+```{r cifras-lectura, include=FALSE}
+top <- a_etiquetar %>% filter(DPTO_CCDGO != "11")
+bog <- dptos_mapa %>% st_drop_geometry() %>% filter(DPTO_CCDGO == "11")
+por_cada_100 <- function(b) format(round(100 - round(b, 1), 2), nsmall = 2, decimal.mark = ",")
+```
+
+**Lo que se observa:**
+
+1. **La brecha concluyente más alta** está en `r top$departamento[1]` (`r pct(top$brecha_hora[1])`) y `r top$departamento[2]` (`r pct(top$brecha_hora[2])`). Allí, por cada $ 100 que recibe por hora un hombre con educación superior, una mujer con educación superior recibe cerca de $ `r por_cada_100(top$brecha_hora[1])` y $ `r por_cada_100(top$brecha_hora[2])`.
+   Hay que leer estas dos cifras con cuidado. En ambos departamentos la muestra es solo urbana y pequeña: `r top$n_mujeres[1]` mujeres y `r top$n_hombres[1]` hombres en `r top$departamento[1]`. Por eso el margen de error es ancho: de `r pct(top$ic_inf[1])` a `r pct(top$ic_sup[1])` en `r top$departamento[1]`.
+2. **En el Eje Cafetero la brecha también es alta**: `r top$departamento[3]` (`r pct(top$brecha_hora[3])`) y `r top$departamento[4]` (`r pct(top$brecha_hora[4])`). Allí la muestra es más grande y el margen de error más estrecho. Le sigue `r top$departamento[5]` (`r pct(top$brecha_hora[5])`).
+3. **Bogotá** tiene una brecha de `r pct(bog$brecha_hora)` (margen de error de `r pct(bog$ic_inf)` a `r pct(bog$ic_sup)`). Es muy parecida a la nacional (13,7 %): por cada $ 100 por hora de un hombre, una mujer recibe cerca de $ `r por_cada_100(bog$brecha_hora)`.
+4. **En `r 33 - nrow(concluyentes)` departamentos la brecha no es concluyente.** Varios están en la costa Caribe (Córdoba, Sucre, Magdalena, La Guajira) y el Pacífico (Chocó, Cauca, Nariño). Que no sea concluyente no prueba que allí ganen lo mismo: puede que la diferencia sea pequeña o que la muestra no alcance para verla.
+
+**Lo que el mapa NO dice:**
+
+- **No dice que vivir en un departamento *cause* una brecha mayor.** Los departamentos se diferencian en qué sectores emplean, qué carreras estudia la gente y cuántas horas se trabaja. El mapa describe dónde se observa la diferencia, no por qué.
+- **El tamaño en el mapa no es el número de personas.** Guaviare ocupa mucho espacio, pero en su muestra hay unas 540 personas con educación superior; Bogotá ocupa poco espacio y en su muestra hay más de 4.100. La tabla de consulta (sección 10) muestra la muestra de cada departamento.
+
+# Margen de error por departamento
+
+El mapa muestra una sola cifra por departamento. Esta figura complementa el mapa: muestra el **margen de error** de cada uno y deja ver por qué algunos quedan en gris.
+
+- **El punto** es la brecha estimada.
+- **La línea** es el intervalo del 95 %: el rango en el que, con alta probabilidad, está la brecha real.
+- **Si la línea cruza el 0**, el departamento queda en gris en el mapa.
+
+```{r intervalos, fig.width = 8.5, fig.height = 9}
+tabla_ic <- dptos_mapa %>%
+  st_drop_geometry() %>%
+  mutate(
+    departamento = factor(departamento, levels = departamento[order(brecha_hora)]),
+    tipo = if_else(concluyente, "Concluyente", "No concluyente (el intervalo incluye el 0)")
+  )
+
+grafico_ic <- ggplot(tabla_ic, aes(x = brecha_hora, y = departamento, color = tipo)) +
+  geom_vline(xintercept = 0, color = "grey40", linewidth = 0.4) +
+  geom_vline(xintercept = BRECHA_NACIONAL, color = "#1F4E79", linewidth = 0.4, linetype = "dashed") +
+  annotate("text", x = BRECHA_NACIONAL, y = Inf, vjust = -0.6, label = paste0("Nacional: ", pct(BRECHA_NACIONAL)),
+           color = "#1F4E79", size = 3, hjust = -0.05) +
+  geom_errorbarh(aes(xmin = ic_inf, xmax = ic_sup), height = 0, linewidth = 0.8) +
+  geom_point(size = 2.2) +
+  scale_color_manual(values = c("Concluyente" = "#AD4A3C",
+                                "No concluyente (el intervalo incluye el 0)" = "grey60"),
+                     name = NULL) +
+  scale_x_continuous(breaks = seq(-30, 40, 10), labels = function(x) paste0(x, " %")) +
+  coord_cartesian(clip = "off") +
+  labs(
+    title = "Brecha de ingreso por hora por departamento, con su margen de error",
+    subtitle = "Educación superior, enero–julio de 2026. Punto: brecha estimada. Línea: intervalo de confianza del 95 %.",
+    x = "Brecha por hora (% que reciben de menos las mujeres)", y = NULL,
+    caption = "Fuente: DANE, GEIH 2026 (enero–julio). Intervalo por bootstrap de 500 repeticiones por vivienda. Elaboración: Equipo 3."
+  ) +
+  theme_minimal(base_size = 10.5) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    plot.subtitle = element_text(color = "grey30", size = 9.5),
+    plot.caption = element_text(color = "grey40", size = 7.5, hjust = 0),
+    plot.title.position = "plot",
+    legend.position = "top",
+    legend.justification = "left",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(18, 14, 8, 8)
+  )
+
+grafico_ic
+```
+
+```{r anchos, include=FALSE}
+anchos <- tabla_ic %>% mutate(ancho = ic_sup - ic_inf) %>% arrange(desc(ancho))
+```
+
+Lectura:
+
+- **Los intervalos más anchos** son los de `r anchos$departamento[1]`, `r anchos$departamento[2]` y `r anchos$departamento[3]`: miden más de `r floor(anchos$ancho[3])` puntos porcentuales de punta a punta. Allí la cifra podría cambiar bastante si se repitiera la encuesta con otras viviendas.
+- **Los más estrechos** son los de `r anchos$departamento[33]`, `r anchos$departamento[32]` y `r anchos$departamento[31]` (unos `r round(anchos$ancho[33])` a `r round(anchos$ancho[31])` puntos), donde se encuestó a más personas.
+- **Ningún intervalo concluyente baja de 0**, pero varios están cerca (Vichada y San Andrés empiezan en 1 % a 1,5 %). La cifra puntual de esos departamentos es menos firme que la de Bogotá o Caldas.
+
+# Tabla de consulta
+
+```{r tabla}
+tabla_consulta <- dptos_mapa %>%
+  st_drop_geometry() %>%
+  arrange(desc(brecha_hora)) %>%
+  transmute(
+    Departamento = departamento,
+    `Brecha por hora` = pct(brecha_hora),
+    `Margen de error (IC 95 %)` = paste0(pct(ic_inf), " a ", pct(ic_sup)),
+    `¿Concluyente?` = if_else(concluyente, "Sí", "No"),
+    `Hora hombres (pesos)` = format(hora_hombres, big.mark = ".", decimal.mark = ","),
+    `Hora mujeres (pesos)` = format(hora_mujeres, big.mark = ".", decimal.mark = ","),
+    `Muestra H / M` = paste(n_hombres, "/", n_mujeres),
+    `Precisión (DANE)` = precision_dane,
+    `Solo urbana` = if_else(solo_urbana, "Sí", "")
+  )
+
+knitr::kable(tabla_consulta, align = "lrrcrrrcc")
+```
+
+La columna **Precisión (DANE)** usa el coeficiente de variación del ingreso por hora de cada sexo. Sigue el criterio del DANE: hasta 7 % es *precisa* y entre 7 % y 15 % es *aceptable*. Todos los departamentos quedan en una de esas dos categorías. Aun así, una estimación precisa del ingreso de cada sexo no garantiza que la **diferencia** entre los dos sea concluyente. Para eso miramos el intervalo.
+
+# Versión interactiva (tmap)
+
+Esta versión es para **consultar** el mapa. Al pasar el cursor aparece el nombre del departamento, y al hacer clic se ven su brecha, el margen de error, la lectura "por cada $ 100" y el tamaño de la muestra. Se puede acercar con la rueda del mouse.
+
+```{r interactivo}
+tmap_mode("view")
+
+dptos_interactivo <- dptos_mapa %>%
+  mutate(
+    `Brecha por hora` = etiqueta_dato,
+    `Margen de error (IC 95 %)` = paste0(pct(ic_inf), " a ", pct(ic_sup)),
+    `Por cada $ 100 de un hombre, una mujer recibe` =
+      if_else(concluyente, paste0("$ ", format(round(100 - brecha_hora, 1), nsmall = 1, decimal.mark = ",")),
+              "No se puede afirmar una diferencia"),
+    `Ingreso por hora, hombres` = paste0("$ ", format(hora_hombres, big.mark = ".")),
+    `Ingreso por hora, mujeres` = paste0("$ ", format(hora_mujeres, big.mark = ".")),
+    `Personas en la muestra (H / M)` = paste(n_hombres, "/", n_mujeres),
+    `Muestra solo urbana` = if_else(solo_urbana, "Sí", "No")
+  )
+
+mapa_interactivo <- tm_shape(dptos_interactivo) +
+  tm_polygons(
+    fill = "clase",
+    fill.scale = tm_scale_categorical(values = unname(PALETA)),
+    fill.legend = tm_legend(title = paste0("Brecha por hora (nacional: ", pct(BRECHA_NACIONAL), ")")),
+    fill_alpha = 0.85,
+    col = "white", lwd = 0.8,
+    id = "departamento",
+    popup.vars = c("Brecha por hora", "Margen de error (IC 95 %)",
+                   "Por cada $ 100 de un hombre, una mujer recibe",
+                   "Ingreso por hora, hombres", "Ingreso por hora, mujeres",
+                   "Personas en la muestra (H / M)", "Muestra solo urbana")
+  ) +
+  tm_basemap(NULL)   # sin mapa de fondo: no depende de servicios externos y funciona sin internet
+
+mapa_interactivo
+```
+
+# Exportación
+
+- El mapa estático se guarda en PNG a 300 ppp para la presentación.
+- La figura de intervalos se guarda también en PNG.
+- La versión interactiva se guarda como HTML que se abre con doble clic en cualquier navegador.
+
+```{r exportar}
+ggsave(file.path(CARPETA_SALIDAS, "Equipo3_Proyecto3_Mapa_Brecha_Departamento.png"),
+       mapa, width = 8.5, height = 10, dpi = 300, bg = "white")
+
+ggsave(file.path(CARPETA_SALIDAS, "Equipo3_Proyecto3_Intervalos_Departamento.png"),
+       grafico_ic, width = 8.5, height = 9, dpi = 300, bg = "white")
+
+tmap_save(mapa_interactivo,
+          file.path(CARPETA_SALIDAS, "Equipo3_Proyecto3_Mapa_Interactivo.html"),
+          selfcontained = TRUE)
+
+list.files(CARPETA_SALIDAS)
+```
+
+# Limitaciones del mapa
+
+1. **Representatividad territorial.** Juntamos siete meses de encuesta (enero–julio) para tener muestra suficiente por departamento. Aun así, en los departamentos pequeños las muestras son de unos cientos de personas por sexo, y por eso los márgenes de error son anchos.
+2. **Cobertura solo urbana en 9 departamentos.** En Arauca, Casanare, Putumayo, San Andrés, Amazonas, Guainía, Guaviare, Vaupés y Vichada, la GEIH solo encuestó cabeceras municipales. El color cubre todo el departamento, pero la cifra no representa a quienes viven en zona rural.
+3. **Área no es población.** Un departamento grande llama más la atención aunque tenga pocas personas con educación superior. Por eso acompañamos el mapa con la tabla de muestras y la figura de intervalos.
+4. **Todas las edades juntas.** El mapa usa a todas las personas ocupadas con educación superior, no solo a las de 18 a 28 años. Al separar por edad y departamento, varias celdas quedan con menos de 30 hombres jóvenes y las cifras no serían confiables. La diferencia por edad está en el notebook de Python (sección 3).
+5. **Descriptivo, no causal.** Las diferencias entre departamentos pueden deberse a la mezcla de sectores, carreras, tamaño de empresa u horas trabajadas. El mapa no separa esas razones.
+
+```{r sesion, include=FALSE}
+sessionInfo()
+```

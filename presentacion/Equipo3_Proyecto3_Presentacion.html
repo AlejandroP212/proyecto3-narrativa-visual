@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Mismo título, mismo ingreso? · Equipo 3 · Proyecto 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+/* Presentación narrativa del Proyecto 3 (modalidad A, 10 diapositivas 16:9).
+   Colores fijos en todo el proyecto: hombres #1F4E79 (azul), mujeres #B8862B (ocre), brecha #AD4A3C (rojo teja).
+   Navegación: flechas o clic en ‹ ›, N = notas del expositor, F = pantalla completa, G = vista general.
+   PDF: se genera con Edge/Chrome (Imprimir → Guardar como PDF, sin márgenes, con gráficos de fondo). */
+:root {
+  --night: #0c1a28;
+  --paper: #fcfcfb;
+  --panel: #f2f4f6;
+  --rule: #dfe3e8;
+  --ink: #0f1f30;
+  --ink-2: #46566a;
+  --muted: #6b7a8c;
+  --hombre: #1F4E79; --hombre-soft: #e3ebf3;
+  --mujer: #B8862B;  --mujer-soft: #f7efdf;
+  --brecha: #AD4A3C; --brecha-soft: #f6e4e0;
+  --gris: #a9b4c0;
+  --font: "Archivo", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: min(1vw, 1.77778vh); height: 100%; background: var(--night); }
+body { margin: 0; height: 100%; overflow: hidden; background: var(--night); color: var(--ink);
+  font-family: var(--font); font-size: 1.3rem; line-height: 1.42; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+b, strong { font-weight: 650; }
+a { color: var(--hombre); }
+:focus-visible { outline: .22rem solid var(--hombre); outline-offset: .18rem; border-radius: .3rem; }
+.ic { width: 1.3em; height: 1.3em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -.26em; }
+
+/* ---------- Marco ---------- */
+.deck { position: fixed; inset: 0; display: grid; place-items: center; }
+.stage { position: relative; width: 100rem; height: 56.25rem; background: var(--paper); overflow: hidden; box-shadow: 0 0 6rem rgba(0,0,0,.35); }
+.slide { position: absolute; inset: 0; padding: 2.1rem 3.4rem 4.6rem; display: flex; flex-direction: column; gap: 1rem;
+  opacity: 0; visibility: hidden; transform: translateX(2.4rem); background: var(--paper);
+  transition: opacity .45s ease, transform .6s cubic-bezier(.2,.8,.2,1), visibility 0s linear .6s; }
+.slide.is-past { transform: translateX(-2.4rem); }
+.slide.is-active { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .slide { transition: opacity .2s ease, visibility 0s linear .2s; transform: none !important; } }
+
+.slide-head { display: flex; align-items: center; justify-content: space-between; min-height: 2.4rem; flex: none; }
+.track { display: flex; align-items: center; gap: 1rem; color: var(--muted); font-size: 1.04rem; font-weight: 550; }
+.track-bars { display: flex; gap: .32rem; }
+.track-bars i { display: block; width: 2.1rem; height: .34rem; border-radius: .2rem; background: var(--rule); }
+.track-bars i.done { background: var(--gris); }
+.track-bars i.on { background: var(--ink); }
+.tool { display: inline-flex; align-items: center; gap: .5rem; font-size: 1rem; font-weight: 650; color: var(--ink-2);
+  background: var(--panel); border-radius: 99rem; padding: .35rem .9rem; }
+.tool i { width: .7rem; height: .7rem; border-radius: 50%; background: var(--ink); display: block; }
+
+.title { margin: 0; font-size: 2.7rem; font-weight: 760; font-stretch: 110%; letter-spacing: -.012em; line-height: 1.07; text-wrap: balance; max-width: 90rem; flex: none; }
+.lede { margin: 0; font-size: 1.36rem; line-height: 1.38; color: var(--ink-2); max-width: 86rem; text-wrap: pretty; flex: none; }
+.small { margin: 0; font-size: 1.14rem; line-height: 1.42; color: var(--ink-2); }
+.note { margin: 0; font-size: 1rem; color: var(--muted); line-height: 1.35; }
+h4 { margin: 0; font-size: 1.26rem; font-weight: 700; font-stretch: 106%; line-height: 1.25; }
+.src { position: absolute; left: 3.4rem; bottom: 1.45rem; margin: 0; max-width: 58rem; font-size: .92rem; color: var(--muted); line-height: 1.3; z-index: 3; }
+.cols { display: grid; grid-template-columns: var(--cols, 1fr 1fr); gap: 2.4rem; flex: 1 1 auto; min-height: 0; align-items: start; }
+.stack { display: flex; flex-direction: column; gap: .9rem; min-height: 0; min-width: 0; }
+.fig { margin: 0; min-height: 0; display: flex; flex-direction: column; gap: .4rem; }
+.fig img { display: block; width: auto; max-width: 100%; height: auto; max-height: 37rem; object-fit: contain; border-radius: .4rem; background: #fff; }
+.flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+.step { background: var(--panel); border-radius: .8rem; padding: 1rem 1.15rem 1.1rem; display: flex; flex-direction: column; gap: .45rem; position: relative; border-top: .4rem solid var(--k, var(--ink)); }
+.step .k { font-size: .92rem; font-weight: 700; color: var(--muted); letter-spacing: .03em; text-transform: uppercase; }
+.step p { margin: 0; font-size: 1.1rem; color: var(--ink-2); line-height: 1.36; }
+.slide.texto .small { font-size: 1.24rem; }
+.slide.texto .clean li { font-size: 1.24rem; }
+.clean { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
+.clean li { display: flex; gap: .7rem; align-items: flex-start; font-size: 1.16rem; line-height: 1.38; }
+.clean li .ic { color: var(--muted); margin-top: .12rem; }
+.callout { margin: 0; padding: .9rem 1.15rem; background: var(--panel); border-left: .35rem solid var(--ink); border-radius: .2rem .6rem .6rem .2rem; font-size: 1.16rem; line-height: 1.4; }
+.callout.rojo { border-left-color: var(--brecha); background: var(--brecha-soft); }
+.callout.azul { border-left-color: var(--hombre); background: var(--hombre-soft); }
+.callout.ocre { border-left-color: var(--mujer); background: var(--mujer-soft); }
+.tiles { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 1rem; }
+.tile { background: var(--panel); border-radius: .8rem; padding: .95rem 1.1rem 1.05rem; display: flex; flex-direction: column; gap: .3rem; }
+.tile .big { font-size: 2.6rem; font-weight: 780; font-stretch: 114%; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.tile .big small { font-size: .46em; font-weight: 650; letter-spacing: 0; }
+.tile p { margin: 0; font-size: 1.04rem; color: var(--ink-2); line-height: 1.32; }
+.tile.rojo .big { color: var(--brecha); }
+.c-h { color: var(--hombre); font-weight: 700; } .c-m { color: var(--mujer); font-weight: 700; } .c-b { color: var(--brecha); font-weight: 700; }
+.links { display: flex; flex-wrap: wrap; gap: .6rem; }
+.btn { display: inline-flex; align-items: center; gap: .5rem; text-decoration: none; font-size: 1.02rem; font-weight: 650;
+  color: #fff; background: var(--ink); border-radius: 99rem; padding: .5rem 1.05rem; }
+.btn:hover { background: #24384d; }
+.btn.claro { background: var(--panel); color: var(--ink); }
+.btn.claro:hover { background: var(--rule); }
+.pendiente { display: grid; place-items: center; text-align: center; gap: .4rem; background: repeating-linear-gradient(45deg, var(--panel), var(--panel) .8rem, #eef0f2 .8rem, #eef0f2 1.6rem);
+  border: .12rem dashed var(--gris); border-radius: .6rem; color: var(--muted); font-size: 1.1rem; padding: 2rem; min-height: 24rem; }
+
+/* Portada */
+.cover { display: grid; grid-template-columns: 1.15fr 1fr; gap: 3.2rem; flex: 1; align-items: center; }
+.cover .kicker { margin: 0; font-size: 1.14rem; color: var(--ink-2); font-weight: 550; }
+.cover h1 { margin: .8rem 0 1.1rem; font-size: 4.9rem; line-height: .98; font-weight: 800; font-stretch: 120%; letter-spacing: -.025em; text-wrap: balance; }
+.question { margin: 0; font-size: 1.42rem; line-height: 1.36; color: var(--ink); padding-left: 1.1rem; border-left: .35rem solid var(--brecha); }
+.team { display: flex; flex-wrap: wrap; gap: .5rem 1.6rem; margin-top: 1.5rem; font-size: 1.2rem; font-weight: 650; }
+.team span { display: inline-flex; align-items: center; gap: .6rem; }
+.av { display: inline-grid; place-items: center; width: 2.3rem; height: 2.3rem; border-radius: 50%; color: #fff; font-weight: 800; font-size: 1rem; font-stretch: 115%; }
+.tools { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.2rem; }
+
+/* Barras "por cada $ 100" */
+.cien { display: grid; gap: 1.2rem; }
+.cien .row { display: grid; grid-template-columns: 9rem 1fr; align-items: center; gap: 1rem; }
+.cien .lab { font-size: 1.2rem; font-weight: 700; text-align: right; }
+.cien .bar { height: 4.4rem; border-radius: 0 .5rem .5rem 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 1.1rem;
+  color: #fff; font-size: 2rem; font-weight: 800; font-stretch: 112%; font-variant-numeric: tabular-nums; }
+.cien .gap { height: 4.4rem; border: .14rem dashed var(--brecha); border-left: 0; border-radius: 0 .5rem .5rem 0; }
+
+/* Tablas */
+table.t { border-collapse: collapse; width: 100%; font-size: 1.06rem; font-variant-numeric: tabular-nums; }
+table.t th { text-align: left; font-weight: 650; color: var(--muted); font-size: .94rem; padding: .38rem .5rem; border-bottom: .12rem solid var(--ink); }
+table.t td { padding: .38rem .5rem; border-bottom: .06rem solid var(--rule); vertical-align: top; }
+table.t td.r, table.t th.r { text-align: right; }
+
+/* Navegación */
+.nav { position: absolute; right: 2.4rem; bottom: 1.05rem; display: flex; align-items: center; gap: .55rem; z-index: 5; }
+.nav button { border: 0; background: transparent; width: 2.7rem; height: 2.7rem; border-radius: 50%; display: grid; place-items: center; cursor: pointer; color: var(--ink); }
+.nav button:hover { background: var(--panel); }
+.nav button:disabled { opacity: .3; cursor: default; background: transparent; }
+.nav .count { font-size: 1.02rem; color: var(--ink-2); min-width: 4.4rem; text-align: center; font-variant-numeric: tabular-nums; }
+.nav .pill { width: auto; padding: 0 1.05rem; border-radius: 99rem; gap: .45rem; display: inline-flex; align-items: center; font-size: 1rem; font-weight: 600; }
+.nav .pill.dark { background: var(--ink); color: #fff; }
+.nav .pill.dark:hover { background: #24384d; }
+.progress { position: absolute; left: 0; bottom: 0; height: .34rem; background: var(--ink); transition: width .5s cubic-bezier(.2,.8,.2,1); z-index: 5; }
+
+/* Notas del expositor */
+.notes { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); width: min(96vw, 72rem); max-height: 40vh; overflow: auto; z-index: 25;
+  background: #fff; color: var(--ink); border-radius: .8rem; padding: 1rem 1.3rem; font-size: 1.12rem; line-height: 1.45;
+  box-shadow: 0 .6rem 2.4rem rgba(0,0,0,.4); display: none; }
+.notes.open { display: block; }
+.notes h5 { margin: 0 0 .4rem; font-size: .96rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.notes p { margin: 0 0 .5rem; }
+
+/* Vista general */
+.overview { position: fixed; inset: 0; z-index: 30; background: rgba(12,26,40,.96); display: none; overflow: auto; padding: 3vh 3vw; }
+.overview.open { display: block; }
+.overview ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1.2rem; }
+.overview button { width: 100%; text-align: left; border: 0; border-radius: .6rem; background: #fff; padding: 1rem 1.1rem; cursor: pointer; min-height: 7rem; display: flex; flex-direction: column; gap: .4rem; }
+.overview button:hover { outline: .2rem solid var(--mujer); }
+.overview .n { font-size: .95rem; color: var(--muted); font-weight: 650; }
+.overview .h { font-size: 1.1rem; font-weight: 650; line-height: 1.3; }
+
+/* Impresión / PDF: una diapositiva por página */
+@media print {
+  @page { size: 1600px 900px; margin: 0; }
+  html, body { font-size: 16px; height: auto; overflow: visible; background: #fff; }
+  .deck { position: static; display: block; }
+  .stage { box-shadow: none; width: 1600px; height: auto; overflow: visible; background: none; }
+  .slide { position: relative; opacity: 1; visibility: visible; transform: none; width: 1600px; height: 900px; break-after: page; page-break-after: always; transition: none; }
+  .nav, .progress, .notes, .overview { display: none !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></symbol>
+  <symbol id="i-notes" viewBox="0 0 24 24"><path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></symbol>
+  <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
+</svg>
+
+<main class="deck">
+<div class="stage" id="stage">
+
+<!-- 1. Portada -->
+<section class="slide" data-title="Portada" data-notes="<p><b>Tomás · 30 segundos.</b> Buenas tardes. Somos el Equipo 3. Esta presentación es para una persona concreta: una mujer de 18 a 28 años que está terminando una carrera técnica, tecnológica o universitaria y va a buscar su primer empleo.</p><p>La pregunta que se hace es simple: si tengo el mismo título que un hombre, ¿voy a recibir lo mismo? La barra de la derecha adelanta la respuesta: por cada $&nbsp;100 que recibe por hora un hombre con educación superior, una mujer con educación superior recibe $&nbsp;86,30.</p>">
+  <div class="cover">
+    <div>
+      <p class="kicker">Visualización I · Proyecto 3 · Universidad Externado de Colombia</p>
+      <h1>¿Mismo título, mismo ingreso?</h1>
+      <p class="question">¿Qué diferencias de ingreso laboral se observan entre mujeres y hombres con educación superior en Colombia (enero–julio 2026) y cómo varían según la edad y el departamento?</p>
+      <div class="team">
+        <span><i class="av" style="background:var(--hombre)">T</i>Juan Tomás Rincón Pinzón</span>
+        <span><i class="av" style="background:var(--mujer)">A</i>Alejandro Pardo Costo</span>
+      </div>
+      <p class="note" style="margin-top:.8rem">Equipo 3 · Docentes: Adriana Pineda y Paola Moreno · Noviembre de 2026</p>
+    </div>
+    <div class="stack" style="gap:1.4rem">
+      <p class="small" style="font-size:1.24rem"><b>Por cada $&nbsp;100 que recibe por hora un hombre con educación superior…</b></p>
+      <div class="cien" role="img" aria-label="Hombres 100 pesos, mujeres 86,30 pesos por hora">
+        <div class="row"><span class="lab c-h">Hombre</span><div class="bar" style="width:100%;background:var(--hombre)">$&nbsp;100</div></div>
+        <div class="row"><span class="lab c-m">Mujer</span>
+          <div style="display:flex"><div class="bar" style="width:86.3%;background:var(--mujer)">$&nbsp;86,30</div><div class="gap" style="width:13.7%"></div></div></div>
+      </div>
+      <p class="small">…una mujer con educación superior recibe <b>$&nbsp;86,30</b>. La diferencia, <b class="c-b">13,7&nbsp;%</b>, es la <b>brecha de ingreso por hora</b>.</p>
+      <p class="note">Personas ocupadas con educación superior, todas las edades. DANE, GEIH enero–julio 2026. Cálculos del Equipo 3.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Audiencia y pregunta -->
+<section class="slide" data-title="Para quién es esta historia" data-notes="<p><b>Tomás · 45 segundos.</b> Nuestra audiencia son mujeres jóvenes que van a entrar al mercado laboral con un título. Lo que necesitan entender es si con el mismo nivel educativo les van a pagar lo mismo, en qué momento de la vida laboral la diferencia crece y si cambia según el sector y la región.</p><p>Usamos la Gran Encuesta Integrada de Hogares del DANE, de enero a julio de 2026: son 76.488 personas ocupadas con educación superior que reportaron ingreso y horas.</p><p>Comparamos el ingreso <b>por hora</b> porque los hombres trabajan en promedio 43,7 horas a la semana y las mujeres 41,3. Así comparamos lo que se paga por la misma hora de trabajo.</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>Audiencia y pregunta</span></div></div>
+  <h2 class="title">Para quién es esta historia y qué queremos responder</h2>
+  <div class="cols" style="--cols: 1.05fr 1fr; align-content:center">
+    <div class="stack">
+      <div class="callout ocre"><h4>Audiencia</h4>Mujeres de 18 a 28 años que terminan o acaban de terminar un programa técnico, tecnológico o universitario y van a buscar su primer empleo.</div>
+      <div class="callout"><h4>Qué necesitan entender</h4>Si con el mismo título les van a pagar lo mismo que a un hombre, si la diferencia cambia con la edad y si depende del sector y del departamento donde trabajen. Con eso pueden llegar mejor informadas a una entrevista o a una negociación salarial.</div>
+      <div class="callout rojo"><h4>Pregunta</h4>¿Qué diferencias de ingreso laboral se observan entre mujeres y hombres con educación superior en Colombia (enero–julio 2026) y cómo varían según la edad y el departamento?</div>
+    </div>
+    <div class="stack">
+      <h4>Cómo leer las cifras de esta presentación</h4>
+      <table class="t">
+        <tr><th>Término</th><th>Qué significa</th></tr>
+        <tr><td><b>Educación superior</b></td><td>Técnica, tecnológica, universitaria o posgrado (título más alto alcanzado).</td></tr>
+        <tr><td><b>Ingreso por hora</b></td><td>Ingreso laboral del mes dividido entre las horas trabajadas en el mes.</td></tr>
+        <tr><td><b>Brecha</b></td><td>Cuánto menos recibe una mujer frente a un hombre con el mismo nivel. 13,7&nbsp;% = por cada $&nbsp;100 de él, ella recibe $&nbsp;86,30.</td></tr>
+        <tr><td><b>Margen de error</b></td><td>Rango en el que, con 95&nbsp;% de confianza, está la cifra real. Si incluye el 0, no podemos afirmar que haya brecha.</td></tr>
+      </table>
+      <div class="tiles" style="--n:2">
+        <div class="tile"><span class="big">76.488</span><p>personas ocupadas con educación superior en la encuesta (enero–julio 2026)</p></div>
+        <div class="tile"><span class="big" style="font-size:2.1rem"><span class="c-h">43,7</span> · <span class="c-m">41,3</span></span><p>horas a la semana trabajan hombres y mujeres: por eso comparamos <b>por hora</b></p></div>
+      </div>
+    </div>
+  </div>
+  <p class="src">Fuente: DANE, Gran Encuesta Integrada de Hogares (GEIH) 2026, enero–julio, con factor de expansión. Cálculos del Equipo 3.</p>
+</section>
+
+<!-- 3. La Gran Idea -->
+<section class="slide" data-title="La Gran Idea" data-notes="<p><b>Tomás · 1 minuto.</b> Esta es nuestra Gran Idea. [Leerla despacio.]</p><p>Tres cifras la sostienen. Primero, la brecha por hora con educación superior es de 13,7&nbsp;%, con un margen de error de 11,2&nbsp;% a 16,3&nbsp;%: no es un accidente de la muestra. Al mes la diferencia es mayor, 18,5&nbsp;%, porque además ellas trabajan algunas horas menos.</p><p>Segundo, para las jóvenes de 18 a 28 años la brecha es de 7,4&nbsp;%, y en el grupo de 29 a 40 años es de 14,1&nbsp;%. Tercero, la brecha aparece en casi todos los sectores y en 21 de los 33 departamentos.</p><p>Ahora les mostramos de dónde sale cada cifra.</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>La Gran Idea</span></div></div>
+  <h2 class="title">La Gran Idea</h2>
+  <div class="callout rojo" style="font-size:1.6rem;line-height:1.38;padding:1.3rem 1.6rem">
+    <b>El título no iguala el pago.</b> Con el mismo nivel educativo, las mujeres reciben <b>13,7&nbsp;% menos por hora</b> que los hombres. Al comenzar la vida laboral (18 a 28 años) la diferencia es menor, <b>7,4&nbsp;%</b>, pero en el grupo de 29 a 40 años es casi el doble y aparece en casi todos los sectores y en la mayoría de los departamentos. Saber cuánto paga por hora el sector y la región donde quieres trabajar te da argumentos para negociar.
+  </div>
+  <div class="tiles" style="--n:4;margin-top:.4rem">
+    <div class="tile rojo"><span class="big">13,7 <small>%</small></span><p><b>Brecha por hora</b>, educación superior. Margen de error: 11,2&nbsp;% a 16,3&nbsp;%.</p></div>
+    <div class="tile"><span class="big">18,5 <small>%</small></span><p><b>Brecha al mes</b>: <span class="c-h">$&nbsp;4,07 millones</span> frente a <span class="c-m">$&nbsp;3,32 millones</span>.</p></div>
+    <div class="tile"><span class="big">7,4 <small>→</small> 14,1 <small>%</small></span><p>Brecha por hora a los <b>18–28</b> años y a los <b>29–40</b> años.</p></div>
+    <div class="tile"><span class="big">21 <small>de 33</small></span><p>departamentos donde la brecha es <b>concluyente</b> (el margen de error no incluye el 0).</p></div>
+  </div>
+  <h4 style="margin-top:.6rem">Cómo se reparte la historia</h4>
+  <div class="flow">
+    <div class="step" style="--k:#E8B10E"><span class="k">Power BI · panorama</span><p>¿Cuánto reciben al mes hombres y mujeres según su nivel educativo? ¿Por qué el promedio general esconde la brecha?</p></div>
+    <div class="step" style="--k:#3776AB"><span class="k">Python · Seaborn y Plotly</span><p>¿La diferencia está en todos los ingresos o solo en los altos? ¿Cambia con la edad? ¿En qué sectores es mayor?</p></div>
+    <div class="step" style="--k:#276DC3"><span class="k">R · mapa</span><p>¿En qué departamentos se puede afirmar que hay brecha y dónde no alcanza la muestra?</p></div>
+  </div>
+  <p class="src">Fuente: DANE, GEIH 2026 (enero–julio). Margen de error: intervalo de confianza del 95&nbsp;% por bootstrap (500 repeticiones por vivienda). Cálculos del Equipo 3.</p>
+</section>
+
+<!-- 4. Power BI -->
+<section class="slide" data-title="Panorama (Power BI)" data-notes="<p><b>Tomás · 1 minuto. Abrir el tablero publicado si la docente lo pide.</b> El tablero da el panorama. Si miramos a todas las personas ocupadas, la brecha mensual es de 8,6&nbsp;%. Pero si miramos solo a quienes tienen educación superior, sube a 18,5&nbsp;%.</p><p>¿Por qué el promedio general esconde la brecha? Porque entre las mujeres ocupadas el 44,1&nbsp;% tiene educación superior, y entre los hombres solo el 29,7&nbsp;%. Al mezclar todos los niveles, las mujeres aparecen con más ingreso porque en promedio estudiaron más. Por hora, mezclando a todos, incluso parecería que ellas reciben 3,8&nbsp;% más. Por eso toda la historia compara personas con el mismo nivel educativo.</p><p>[Mostrar el filtro de nivel educativo y la evolución mensual del tablero.]</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>Panorama</span></div><span class="tool"><i style="background:#E8B10E"></i>Power BI</span></div>
+  <h2 class="title">Con educación superior la brecha es más del doble que en el promedio general</h2>
+  <div class="cols" style="--cols: 1.45fr 1fr">
+    <figure class="fig">
+      <img src="img/powerbi_pagina1.png" alt="Tablero de Power BI: ingreso laboral promedio por sexo y nivel educativo, GEIH enero–julio 2026" data-pendiente="Captura de la página 1 del tablero (img/powerbi_pagina1.png)">
+    </figure>
+    <div class="stack">
+      <div class="tiles" style="--n:2">
+        <div class="tile"><span class="big">8,6 <small>%</small></span><p>Brecha mensual, <b>todas</b> las personas ocupadas</p></div>
+        <div class="tile rojo"><span class="big">18,5 <small>%</small></span><p>Brecha mensual, personas con <b>educación superior</b></p></div>
+      </div>
+      <div class="callout"><h4>¿Por qué el promedio general esconde la brecha?</h4>
+        Entre las mujeres ocupadas, el <b class="c-m">44,1&nbsp;%</b> tiene educación superior; entre los hombres, el <b class="c-h">29,7&nbsp;%</b>. Al mezclar todos los niveles, ellas suben el promedio porque estudiaron más. Por eso comparamos personas <b>con el mismo nivel educativo</b>.</div>
+      <div class="links">
+        <a class="btn" href="https://app.powerbi.com/links/N7NaGvljjq?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99&amp;pbi_source=linkShare" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Abrir el tablero en Power BI</a>
+      </div>
+    </div>
+  </div>
+  <p class="src">Fuente: DANE, GEIH 2026 (enero–julio), con factor de expansión. Tablero: <code>powerbi/Equipo3_Proyecto3_Dashboard.pbix</code>.</p>
+</section>
+
+<!-- 5. Seaborn: distribución -->
+<section class="slide" data-title="Toda la distribución (Python · Seaborn)" data-notes="<p><b>Alejandro · 1 minuto 15.</b> Un promedio puede esconder que la diferencia está solo en unos pocos sueldos muy altos. Este gráfico muestra cómo se reparten los ingresos por hora de todas las personas, en tres niveles educativos.</p><p>Cada curva es un sexo: azul hombres, ocre mujeres. Donde la curva es más alta hay más personas con ese ingreso. En los tres niveles la curva de las mujeres está corrida a la izquierda: hay más mujeres en ingresos bajos y menos en los altos.</p><p>La línea punteada es la mediana: el ingreso que deja a la mitad de las personas por debajo. Con posgrado, la mitad de las mujeres recibe menos de $&nbsp;28.846 por hora y la mitad de los hombres menos de $&nbsp;34.154.</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>Desarrollo · distribución</span></div><span class="tool"><i style="background:#3776AB"></i>Python · Seaborn</span></div>
+  <h2 class="title">La diferencia no está solo en los sueldos altos: aparece en los tres niveles educativos</h2>
+  <div class="cols" style="--cols: 1.6fr 1fr">
+    <figure class="fig"><img src="img/python_g1_distribucion_ingreso_hora.png" alt="Curvas de distribución del ingreso por hora de hombres y mujeres para educación técnica, universitaria y posgrado"></figure>
+    <div class="stack">
+      <p class="small"><b>Cómo leerlo:</b> donde la curva es más alta, hay más personas con ese ingreso. La línea punteada es la <b>mediana</b>: la mitad gana menos que ese valor.</p>
+      <table class="t">
+        <tr><th>Mediana por hora</th><th class="r c-h">Hombres</th><th class="r c-m">Mujeres</th></tr>
+        <tr><td>Técnica o tecnológica</td><td class="r">$&nbsp;10.490</td><td class="r">$&nbsp;9.615</td></tr>
+        <tr><td>Universitaria</td><td class="r">$&nbsp;15.734</td><td class="r">$&nbsp;13.846</td></tr>
+        <tr><td>Posgrado</td><td class="r">$&nbsp;34.154</td><td class="r">$&nbsp;28.846</td></tr>
+      </table>
+      <div class="callout ocre">En los tres niveles la curva de las mujeres está <b>más a la izquierda</b>: hay más mujeres en ingresos bajos y menos en los altos. No es un efecto de unos pocos sueldos muy grandes.</div>
+    </div>
+  </div>
+  <p class="src">Fuente: DANE, GEIH 2026 (enero–julio). Ponderado con factor de expansión. Curvas hasta $&nbsp;60 mil por hora (95,5&nbsp;% de la población); las medianas usan todos los datos.</p>
+</section>
+
+<!-- 6. Seaborn: edad -->
+<section class="slide" data-title="La edad (Python · Seaborn)" data-notes="<p><b>Alejandro · 1 minuto 15.</b> Esta es la parte más importante para nuestra audiencia. Entre los 18 y 28 años, la brecha por hora es de 7,4&nbsp;%: por cada $&nbsp;100 de un joven, una joven recibe $&nbsp;92,60. En el grupo de 29 a 40 años la brecha es de 14,1&nbsp;%: $&nbsp;85,90 por cada $&nbsp;100.</p><p>Las líneas negras son el margen de error. La diferencia entre los dos grupos, 6,7 puntos, es mayor que su margen de error, que va de 1 a 12,3 puntos, así que podemos decir que es real.</p><p>Cuidado con la lectura: la encuesta compara personas distintas de cada edad en 2026. No sigue a las mismas mujeres en el tiempo, así que no podemos decir que a una joven le vaya a pasar esto. Lo que sí podemos decir es que hoy la brecha es mayor en el grupo de 29 a 40 años.</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>Desarrollo · edad</span></div><span class="tool"><i style="background:#3776AB"></i>Python · Seaborn</span></div>
+  <h2 class="title">Al comenzar la vida laboral la brecha es menor; en el grupo de 29 a 40 años es casi el doble</h2>
+  <div class="cols" style="--cols: 1.5fr 1fr">
+    <figure class="fig"><img src="img/python_g2_brecha_por_edad.png" alt="Barras de la brecha de ingreso por hora por grupo de edad con intervalos de confianza: 18 a 28 años 7,4&nbsp;%, 29 a 40 años 14,1&nbsp;%, 41 a 59 años 10,5&nbsp;%, 60 y más 18,3&nbsp;%"></figure>
+    <div class="stack">
+      <div class="tiles" style="--n:2">
+        <div class="tile rojo"><span class="big">$&nbsp;92,60</span><p><b>18 a 28 años:</b> lo que recibe una mujer por cada $&nbsp;100 de un hombre (brecha 7,4&nbsp;%)</p></div>
+        <div class="tile"><span class="big">$&nbsp;85,90</span><p><b>29 a 40 años:</b> lo que recibe una mujer por cada $&nbsp;100 de un hombre (brecha 14,1&nbsp;%)</p></div>
+      </div>
+      <div class="callout">La diferencia entre los dos grupos (6,7 puntos porcentuales) es mayor que su margen de error (1,0 a 12,3 puntos): <b>no es un accidente de la muestra</b>.</div>
+      <div class="callout ocre"><h4>Lo que no dice</h4>Compara personas distintas de cada edad en 2026. No sigue a las mismas mujeres a lo largo de su vida, ni explica por qué la brecha es mayor después de los 28.</div>
+    </div>
+  </div>
+  <p class="src">Fuente: DANE, GEIH 2026 (enero–julio). Líneas negras: intervalo de confianza del 95&nbsp;% (bootstrap por vivienda, 500 repeticiones). Cálculos del Equipo 3.</p>
+</section>
+
+<!-- 7. Plotly: sectores -->
+<section class="slide" data-title="El sector (Python · Plotly)" data-notes="<p><b>Alejandro · 1 minuto 15. Abrir el HTML del ranking y cambiar el menú a 18–28.</b> La audiencia también quiere saber qué pasa en el sector donde quiere trabajar. En este gráfico cada fila es un sector: el punto azul es lo que reciben por hora los hombres jóvenes y el ocre, las mujeres jóvenes. Los sectores están ordenados de mayor a menor brecha.</p><p>Para las jóvenes de 18 a 28 años, en 12 de 17 sectores ellas reciben menos. Las brechas más altas están en comercio (20&nbsp;%), servicios administrativos (18,5&nbsp;%) y educación (16,6&nbsp;%). Bajo la línea punteada hay 5 sectores donde ellas reciben igual o más.</p><p>Si cambiamos el menú a todas las edades, salud pasa al primer lugar con 42,3&nbsp;%: un sector donde el 76&nbsp;% de las personas con educación superior son mujeres. El panorama (segundo botón) muestra los 18 sectores a la vez, con su tamaño. Al pasar el cursor aparece el detalle de cada sector.</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>Desarrollo · sector</span></div><span class="tool"><i style="background:#3F4F75"></i>Python · Plotly</span></div>
+  <h2 class="title">El sector cambia la respuesta: entre los 18 y 28 años, las mujeres reciben menos por hora en 12 de 17 sectores</h2>
+  <div class="cols" style="--cols: 1.3fr 1fr">
+    <figure class="fig"><img src="img/python_plotly_sectores_18_28.png" alt="Ingreso por hora de hombres y mujeres de 18 a 28 años con educación superior por sector, ordenado de mayor a menor brecha"></figure>
+    <div class="stack">
+      <ul class="clean">
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-dot"/></svg><span>Brechas más altas a los 18–28: <b>comercio</b> (20,0&nbsp;%), <b>servicios administrativos</b> (18,5&nbsp;%) y <b>educación</b> (16,6&nbsp;%).</span></li>
+        <li><svg class="ic"><use href="#i-dot"/></svg><span>En <b>5 sectores</b> las jóvenes reciben igual o más (transporte, agro, administración pública, construcción y electricidad, gas y agua).</span></li>
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-dot"/></svg><span>Con todas las edades, <b>salud</b> tiene la brecha más alta: <b>42,3&nbsp;%</b> ($&nbsp;57,70 por cada $&nbsp;100). Allí el 76&nbsp;% de quienes tienen educación superior son mujeres.</span></li>
+      </ul>
+      <div class="callout"><b>Interactivo:</b> el menú cambia el grupo de edad y reordena los sectores; el cursor muestra el ingreso por hora y al mes, la brecha y el tamaño de la muestra.</div>
+      <div class="links">
+        <a class="btn" href="../python/html/Equipo3_Proyecto3_Plotly_Sectores_por_Edad.html" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Brecha por sector y edad</a>
+        <a class="btn claro" href="../python/html/Equipo3_Proyecto3_Plotly_Panorama_Sectores.html" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Panorama de los sectores</a>
+      </div>
+      <p class="note">Solo sectores con al menos 50 hombres y 50 mujeres en la muestra. El dato no separa profesiones dentro de un sector (por ejemplo, medicina y enfermería).</p>
+    </div>
+  </div>
+  <p class="src">Fuente: DANE, GEIH 2026 (enero–julio). Sectores: secciones de la CIIU Rev. 4 A.C. Cálculos del Equipo 3.</p>
+</section>
+
+<!-- 8. Mapa R -->
+<section class="slide" data-title="El territorio (R)" data-notes="<p><b>Alejandro · 1 minuto 15. Abrir el mapa interactivo y hacer clic en Caldas.</b> El último ángulo es el territorio. Cada departamento tiene el color de su brecha por hora: más oscuro, brecha más grande. Usamos departamentos porque la GEIH no da cifras confiables por municipio.</p><p>En 21 de los 33 departamentos la brecha es concluyente. La más alta y más firme está en el Eje Cafetero: Caldas, 24,9&nbsp;%, es decir $&nbsp;75,10 por cada $&nbsp;100. Guaviare y Casanare tienen cifras más altas, pero el círculo advierte que allí la encuesta solo cubre zonas urbanas y la muestra es pequeña. Bogotá está en 13,4&nbsp;%, casi igual al país.</p><p>Los departamentos en gris no son lugares sin brecha: son lugares donde la muestra no alcanza para afirmarla.</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>Desarrollo · territorio</span></div><span class="tool"><i style="background:#276DC3"></i>R · sf + ggplot2</span></div>
+  <h2 class="title">En 21 de los 33 departamentos la brecha es concluyente; la más firme está en el Eje Cafetero</h2>
+  <div class="cols" style="--cols: .95fr 1.15fr; gap:2rem">
+    <figure class="fig" style="align-items:center"><img src="img/r_mapa_brecha_departamento.png" alt="Mapa de Colombia por departamento con la brecha de ingreso por hora en educación superior; doce departamentos en gris por no ser concluyentes"></figure>
+    <div class="stack">
+      <table class="t">
+        <tr><th>Departamento</th><th class="r">Brecha por hora</th><th class="r">Por cada $&nbsp;100</th><th>Ojo</th></tr>
+        <tr><td><b>Caldas</b></td><td class="r">24,9&nbsp;%</td><td class="r">$&nbsp;75,10</td><td>Muestra grande, margen estrecho</td></tr>
+        <tr><td>Quindío</td><td class="r">24,1&nbsp;%</td><td class="r">$&nbsp;75,90</td><td></td></tr>
+        <tr><td>Meta</td><td class="r">20,8&nbsp;%</td><td class="r">$&nbsp;79,20</td><td></td></tr>
+        <tr><td>Guaviare · Casanare</td><td class="r">28,1 · 27,3&nbsp;%</td><td class="r">$&nbsp;71,90 · 72,70</td><td>Solo urbana, muestra pequeña</td></tr>
+        <tr><td>Bogotá</td><td class="r">13,4&nbsp;%</td><td class="r">$&nbsp;86,60</td><td>Casi igual al país (13,7&nbsp;%)</td></tr>
+      </table>
+      <div class="callout"><b>Gris no significa "ganan igual".</b> En 12 departamentos el margen de error incluye el 0: la muestra no alcanza para afirmar si hay diferencia.</div>
+      <p class="small"><b>Decisiones del mapa:</b> unidad departamental (la GEIH no da cifras por municipio), cortes de 5 en 5 desde 10&nbsp;% (ningún departamento concluyente tiene menos de 11,4&nbsp;%), proyección MAGNA-SIRGAS Origen Nacional y San Andrés en un recuadro.</p>
+      <div class="links">
+        <a class="btn" href="../r/salidas/Equipo3_Proyecto3_Mapa_Interactivo.html" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Mapa interactivo</a>
+        <a class="btn claro" href="../r/salidas/Equipo3_Proyecto3_Intervalos_Departamento.png" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Margen de error por departamento</a>
+      </div>
+    </div>
+  </div>
+  <p class="src">Fuente: DANE, GEIH 2026 (enero–julio) y Marco Geoestadístico Nacional (municipios unidos por departamento). Intervalos por bootstrap. Cálculos del Equipo 3.</p>
+</section>
+
+<!-- 9. Síntesis y mensaje -->
+<section class="slide texto" data-title="Síntesis y mensaje final" data-notes="<p><b>Tomás · 1 minuto.</b> En resumen, los datos responden la pregunta así: con el mismo nivel educativo, las mujeres reciben menos por hora en casi todos los grupos que miramos. La diferencia es menor al empezar, es mayor en el grupo de 29 a 40 años y cambia mucho de un sector a otro y de un departamento a otro.</p><p>Nuestro mensaje para una joven que va a buscar su primer empleo tiene tres partes: compara por hora, no solo el salario mensual; averigua cuánto paga el cargo en tu sector y tu región; y no asumas que el título garantiza el mismo pago.</p><p>Y lo que no decimos: estos datos no prueban discriminación ni explican las causas, porque no tienen en cuenta el cargo, la carrera ni la experiencia.</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>Cierre</span></div></div>
+  <h2 class="title">El título abre la puerta, pero no garantiza el mismo pago por hora</h2>
+  <div class="cols" style="--cols: 1fr 1fr">
+    <div class="stack">
+      <h4>Lo que encontramos</h4>
+      <ul class="clean">
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-check"/></svg><span>Con educación superior, las mujeres reciben <b>13,7&nbsp;% menos por hora</b> (18,5&nbsp;% al mes). El promedio general (8,6&nbsp;%) la esconde.</span></li>
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-check"/></svg><span>La diferencia está en <b>toda la distribución</b> y en los tres niveles: técnica, universitaria y posgrado.</span></li>
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-check"/></svg><span>Es <b>menor al comenzar</b> (7,4&nbsp;% a los 18–28) y casi el doble a los 29–40 (14,1&nbsp;%).</span></li>
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-check"/></svg><span>Cambia según el <b>sector</b> (de 42,3&nbsp;% en salud a cifras negativas) y el <b>departamento</b> (concluyente en 21 de 33).</span></li>
+      </ul>
+    </div>
+    <div class="stack">
+      <div class="callout ocre" style="font-size:1.24rem"><h4>Para ti, que vas a buscar tu primer empleo</h4>
+        <ul class="clean" style="margin-top:.5rem">
+          <li><svg class="ic"><use href="#i-dot"/></svg><span><b>Compara por hora</b>, no solo el salario mensual.</span></li>
+          <li><svg class="ic"><use href="#i-dot"/></svg><span><b>Averigua cuánto paga el cargo</b> en tu sector y tu región antes de aceptar una oferta.</span></li>
+          <li><svg class="ic"><use href="#i-dot"/></svg><span>Usa los gráficos interactivos para ver <b>tu sector y tu edad</b>.</span></li>
+        </ul>
+      </div>
+      <div class="callout"><h4>Lo que estos datos no dicen</h4>No prueban discriminación ni explican por qué existe la brecha: no tienen en cuenta el cargo, la carrera, la experiencia ni el tamaño de la empresa. Describen dónde y cuánto, no por qué.</div>
+    </div>
+  </div>
+  <div class="stack" style="gap:.6rem;margin-bottom:.4rem">
+    <h4>Explora tu caso</h4>
+    <div class="links">
+      <a class="btn" href="../python/html/Equipo3_Proyecto3_Plotly_Sectores_por_Edad.html" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Tu sector y tu edad</a>
+      <a class="btn claro" href="../python/html/Equipo3_Proyecto3_Plotly_Panorama_Sectores.html" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Panorama de los sectores</a>
+      <a class="btn claro" href="../r/salidas/Equipo3_Proyecto3_Mapa_Interactivo.html" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Tu departamento</a>
+      <a class="btn claro" href="https://app.powerbi.com/links/N7NaGvljjq?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99&amp;pbi_source=linkShare" target="_blank" rel="noopener"><svg class="ic"><use href="#i-open"/></svg>Tablero de Power BI</a>
+    </div>
+  </div>
+  <p class="src">Fuente: DANE, GEIH 2026 (enero–julio). Cálculos del Equipo 3.</p>
+</section>
+
+<!-- 10. Fuentes, definiciones y limitaciones -->
+<section class="slide texto" data-title="Fuentes, definiciones y limitaciones" data-notes="<p><b>Alejandro · 45 segundos.</b> Aquí están las fuentes, las definiciones y las limitaciones; todo está documentado en el repositorio. Las tres limitaciones más importantes: primero, comparamos solo a personas con trabajo remunerado; una recién graduada que busca empleo no aparece en las cifras. Segundo, la encuesta compara personas distintas de cada edad, no la trayectoria de una persona. Tercero, en nueve departamentos la muestra es solo urbana.</p><p>Gracias. Quedamos atentos a sus preguntas.</p>">
+  <div class="slide-head"><div class="track"><span class="track-bars"></span><span>Fuentes y limitaciones</span></div></div>
+  <h2 class="title">Fuentes, definiciones y limitaciones</h2>
+  <div class="cols" style="--cols: 1fr 1fr 1fr; gap:1.8rem">
+    <div class="stack">
+      <h4>Fuentes</h4>
+      <p class="small"><b>DANE, Gran Encuesta Integrada de Hogares (GEIH) 2026</b>, enero–julio, marco 2018. Tablas "Características generales" y "Ocupados", unidas por vivienda, hogar y persona.</p>
+      <p class="small"><b>DANE, Marco Geoestadístico Nacional</b>, capa municipal; los municipios se unen por departamento.</p>
+      <h4 style="margin-top:.4rem">Productos</h4>
+      <p class="small">Repositorio con datos, código y LEEME: <a href="https://github.com/AlejandroP212/proyecto3-narrativa-visual" target="_blank" rel="noopener">github.com/AlejandroP212/proyecto3-narrativa-visual</a></p>
+      <p class="small">Tablero: <a href="https://app.powerbi.com/links/N7NaGvljjq?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99&amp;pbi_source=linkShare" target="_blank" rel="noopener">Power BI Service</a> · Notebook de Python · R Markdown del mapa · Anexo de uso de IA.</p>
+    </div>
+    <div class="stack">
+      <h4>Definiciones</h4>
+      <ul class="clean" style="gap:.5rem">
+        <li><span class="small"><b>Educación superior:</b> nivel más alto alcanzado técnico, tecnológico, universitario o posgrado (P3042 = 8 a 13).</span></li>
+        <li><span class="small"><b>Ingreso por hora:</b> ingreso laboral total / horas totales del mes (horas semanales × 4,33), con factor de expansión.</span></li>
+        <li><span class="small"><b>Brecha:</b> (hombres − mujeres) / hombres × 100.</span></li>
+        <li><span class="small"><b>Concluyente:</b> el intervalo de confianza del 95&nbsp;% (bootstrap por vivienda, 500 repeticiones) no incluye el 0.</span></li>
+        <li><span class="small"><b>Edad:</b> 18–28 es el rango de juventud de la Ley 1622 de 2013.</span></li>
+      </ul>
+    </div>
+    <div class="stack">
+      <h4>Limitaciones</h4>
+      <ul class="clean" style="gap:.5rem">
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-alert"/></svg><span class="small"><b>Descriptivo, no causal:</b> no controla cargo, carrera, experiencia ni empresa.</span></li>
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-alert"/></svg><span class="small"><b>Solo trabajo remunerado:</b> quien busca empleo o trabaja sin pago no aparece.</span></li>
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-alert"/></svg><span class="small"><b>Edad transversal:</b> compara personas distintas, no trayectorias.</span></li>
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-alert"/></svg><span class="small"><b>Ingreso declarado</b> por la persona encuestada; siete meses, no un año.</span></li>
+        <li><svg class="ic" style="color:var(--brecha)"><use href="#i-alert"/></svg><span class="small"><b>Territorio:</b> en 9 departamentos la muestra es solo urbana y pequeña.</span></li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">Detalle de cálculos y cifras de control: <code>docs/Definiciones_compartidas.md</code> y <code>python/Equipo3_Proyecto3_Analisis.ipynb</code>.</p>
+</section>
+
+<nav class="nav" aria-label="Navegación de diapositivas">
+  <button id="prev" aria-label="Diapositiva anterior"><svg class="ic"><use href="#i-prev"/></svg></button>
+  <span class="count" id="count" aria-live="polite">1 / 10</span>
+  <button id="next" aria-label="Diapositiva siguiente"><svg class="ic"><use href="#i-next"/></svg></button>
+  <button id="grid" aria-label="Vista general (G)"><svg class="ic"><use href="#i-grid"/></svg></button>
+  <button class="pill" id="notesBtn" aria-label="Notas del expositor (N)"><svg class="ic"><use href="#i-notes"/></svg>Notas</button>
+  <button class="pill dark" id="full" aria-label="Pantalla completa (F)"><svg class="ic"><use href="#i-full"/></svg>Pantalla completa</button>
+</nav>
+<div class="progress" id="progress"></div>
+</div>
+</main>
+
+<aside class="notes" id="notes" aria-live="polite"></aside>
+<div class="overview" id="overview" role="dialog" aria-label="Vista general"><ol id="ovList"></ol></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const slides = [...document.querySelectorAll(".slide")];
+  const N = slides.length;
+  let cur = 0;
+
+  // Barras de progreso de la cabecera (una por diapositiva, sin contar la portada)
+  slides.forEach((s, i) => {
+    const bars = s.querySelector(".track-bars");
+    if (!bars) return;
+    for (let k = 1; k < N; k++) {
+      const b = document.createElement("i");
+      if (k < i) b.className = "done"; else if (k === i) b.className = "on";
+      bars.appendChild(b);
+    }
+  });
+
+  // Capturas pendientes: si la imagen no existe, se muestra un recuadro que lo dice
+  document.querySelectorAll("img[data-pendiente]").forEach(img => {
+    const marcar = () => {
+      const d = document.createElement("div");
+      d.className = "pendiente";
+      d.innerHTML = "<b>Captura pendiente</b><span>" + img.dataset.pendiente + "</span>";
+      img.replaceWith(d);
+    };
+    if (img.complete && img.naturalWidth === 0) marcar(); else img.addEventListener("error", marcar);
+  });
+
+  function go(i) {
+    cur = Math.max(0, Math.min(N - 1, i));
+    slides.forEach((s, k) => {
+      s.classList.toggle("is-active", k === cur);
+      s.classList.toggle("is-past", k < cur);
+      s.setAttribute("aria-hidden", k === cur ? "false" : "true");
+    });
+    $("#count").textContent = (cur + 1) + " / " + N;
+    $("#prev").disabled = cur === 0;
+    $("#next").disabled = cur === N - 1;
+    $("#progress").style.width = ((cur + 1) / N * 100) + "%";
+    const n = slides[cur].dataset.notes || "";
+    $("#notes").innerHTML = "<h5>Notas · " + (cur + 1) + ". " + slides[cur].dataset.title + "</h5>" + n;
+    if (location.hash !== "#" + (cur + 1)) history.replaceState(null, "", "#" + (cur + 1));
+  }
+
+  const toggleNotes = () => $("#notes").classList.toggle("open");
+  const toggleFull = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+  function toggleGrid(force) {
+    const o = $("#overview");
+    const open = force ?? !o.classList.contains("open");
+    o.classList.toggle("open", open);
+    if (open) o.querySelectorAll("button")[cur]?.focus();
+  }
+
+  // Vista general
+  slides.forEach((s, i) => {
+    const li = document.createElement("li"), b = document.createElement("button");
+    const h = s.querySelector("h1, h2");
+    b.innerHTML = '<span class="n">' + (i + 1) + ". " + s.dataset.title + '</span><span class="h">' + (h ? h.textContent : "") + "</span>";
+    b.addEventListener("click", () => { go(i); toggleGrid(false); });
+    li.appendChild(b); $("#ovList").appendChild(li);
+  });
+
+  $("#prev").addEventListener("click", () => go(cur - 1));
+  $("#next").addEventListener("click", () => go(cur + 1));
+  $("#notesBtn").addEventListener("click", toggleNotes);
+  $("#full").addEventListener("click", toggleFull);
+  $("#grid").addEventListener("click", () => toggleGrid());
+
+  document.addEventListener("keydown", e => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const k = e.key;
+    if ($("#overview").classList.contains("open")) { if (k === "Escape" || k === "g" || k === "G") toggleGrid(false); return; }
+    if (["ArrowRight", "PageDown", " "].includes(k)) { e.preventDefault(); go(cur + 1); }
+    else if (["ArrowLeft", "PageUp"].includes(k)) { e.preventDefault(); go(cur - 1); }
+    else if (k === "Home") go(0);
+    else if (k === "End") go(N - 1);
+    else if (k === "n" || k === "N") toggleNotes();
+    else if (k === "f" || k === "F") toggleFull();
+    else if (k === "g" || k === "G") toggleGrid();
+  });
+
+  const inicial = parseInt(location.hash.slice(1), 10);
+  go(Number.isFinite(inicial) ? inicial - 1 : 0);
+})();
+</script>
+</body>
+</html>

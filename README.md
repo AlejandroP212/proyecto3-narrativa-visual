@@ -9,7 +9,7 @@
 |---|---|
 | **Audiencia** | Mujeres de 18 a 28 años que terminan o acaban de terminar un programa técnico, tecnológico o universitario y van a buscar su primer empleo. |
 | **Pregunta** | ¿Qué diferencias de ingreso laboral se observan entre mujeres y hombres con educación superior en Colombia (enero–julio 2026) y cómo varían según la edad y el departamento? |
-| **La Gran Idea** | Ver [`docs/Definiciones_compartidas.md`](docs/Definiciones_compartidas.md) (versión final en la presentación). |
+| **La Gran Idea** | **El título no iguala el pago.** Con el mismo nivel educativo, las mujeres reciben 13,7 % menos por hora que los hombres. Al comenzar la vida laboral (18 a 28 años) la diferencia es menor, 7,4 %, pero en el grupo de 29 a 40 años es casi el doble y aparece en casi todos los sectores y en la mayoría de los departamentos. |
 
 ## Estructura
 
@@ -26,8 +26,9 @@ proyecto3-narrativa-visual/
 ├── powerbi/                      ← dashboard .pbix (Power BI)
 ├── python/                       ← notebook (Seaborn + Plotly) y html/ con los Plotly exportados
 ├── r/                            ← R Markdown del mapa y salidas/ (PNG + HTML)
-├── presentacion/                 ← presentación narrativa en HTML (máx. 10 diapositivas) e img/
-├── docs/                         ← definiciones compartidas, fuentes y limitaciones, anexo IA, instrucciones
+├── presentacion/                 ← presentación narrativa en HTML y PDF (10 diapositivas) e img/
+├── docs/                         ← definiciones compartidas, anexo de IA, guion de exposición, instrucciones
+├── scripts/armar_entregables.py  ← copia los productos finales a entregables/
 └── entregables/                  ← copia final con la convención Equipo3_Proyecto3_* (lo que se envía por correo)
 ```
 
@@ -61,7 +62,25 @@ install.packages(c("sf", "ggplot2", "dplyr", "readr", "classInt", "ggspatial", "
   - `r/salidas/Equipo3_Proyecto3_Mapa_Interactivo.html`: el mapa interactivo en `tmap`, que se abre con doble clic.
 
 ### 3. Presentación
-Abre `presentacion/Equipo3_Proyecto3_Presentacion.html` en un navegador. Se avanza con las flechas del teclado. La versión PDF está en `entregables/`.
+Abre `presentacion/Equipo3_Proyecto3_Presentacion.html` en un navegador.
+
+| Tecla | Acción |
+|---|---|
+| ← → | Cambiar de diapositiva |
+| **N** | Notas del expositor |
+| **F** | Pantalla completa |
+| **G** | Vista general |
+
+Los botones de las diapositivas abren los interactivos de Plotly, el mapa de `tmap` y el tablero de Power BI. Las imágenes están en `presentacion/img/`. Las capturas de Plotly se tomaron de los HTML con el navegador.
+
+- **PDF:** abre el HTML en Edge o Chrome, elige Imprimir → Guardar como PDF, sin márgenes y con gráficos de fondo, y guárdalo como `presentacion/Equipo3_Proyecto3_Presentacion.pdf`. Cada diapositiva queda en una página.
+- **Anexo de IA:** se genera igual, a partir de `docs/Equipo3_Proyecto3_Anexo_IA.html`, en tamaño carta.
+
+### 4. Carpeta de entregables
+```bash
+python scripts/armar_entregables.py
+```
+Copia los productos finales a `entregables/` con nombres `Equipo3_Proyecto3_*`: presentación (PDF y HTML autocontenido), anexo de IA, fuentes y definiciones, LEEME, `.pbix`, notebook, Plotly y mapa. Vuelve a correrlo cada vez que cambie un producto.
 
 ### Power BI
 - Archivo: `powerbi/Equipo3_Proyecto3_Dashboard.pbix`. Ábrelo con Power BI Desktop.
@@ -71,4 +90,4 @@ Abre `presentacion/Equipo3_Proyecto3_Presentacion.html` en un navegador. Se avan
 - **DANE, Gran Encuesta Integrada de Hogares (GEIH) 2026**, marco 2018, enero–julio. Microdatos: https://microdatos.dane.gov.co/index.php/catalog/900
 - **DANE, Marco Geoestadístico Nacional (MGN)**, capa municipal `MGN_MPIO_POLITICO`, entregada como material del curso (sesión 02 de R). Los departamentos se obtienen uniendo los municipios por `DPTO_CCDGO`.
 
-Las definiciones, los indicadores y las limitaciones están en [`docs/Definiciones_compartidas.md`](docs/Definiciones_compartidas.md).
+Las definiciones, los indicadores y las limitaciones están en [`docs/Definiciones_compartidas.md`](docs/Definiciones_compartidas.md). El uso de IA se declara en `docs/Equipo3_Proyecto3_Anexo_IA.pdf`.

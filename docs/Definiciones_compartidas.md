@@ -9,7 +9,7 @@
 | **Audiencia ciudadana** | Mujeres de 18 a 28 años que están terminando o acaban de terminar un programa técnico, tecnológico o universitario y van a buscar su primer empleo o a negociar su primer salario. |
 | **Necesidad de comprensión** | Saber qué diferencias de ingreso existen, frente a los hombres con el mismo nivel educativo, en el mercado laboral al que entran, y cómo esas diferencias cambian con la edad y el territorio, para hacer preguntas informadas (por ejemplo, al negociar un salario). |
 | **Pregunta analítica** | ¿Qué diferencias de ingreso laboral se observan entre mujeres y hombres con educación superior en Colombia (enero–julio de 2026) y cómo varían según la edad y el departamento? |
-| **La Gran Idea (borrador, cifras por verificar en el notebook)** | Un título de educación superior se asocia con mayores ingresos para las mujeres, pero no con ingresos iguales: al comenzar su vida laboral (18–28 años), las mujeres con educación superior reciben por hora cerca de un 7 % menos que los hombres con su mismo nivel, y entre profesionales de 29 a 40 años esa diferencia es de cerca del 14 %. La brecha también cambia de un departamento a otro. |
+| **La Gran Idea (versión final, la de la presentación)** | **El título no iguala el pago.** Con el mismo nivel educativo, las mujeres reciben 13,7 % menos por hora que los hombres. Al comenzar la vida laboral (18 a 28 años) la diferencia es menor, 7,4 %, pero en el grupo de 29 a 40 años es casi el doble (14,1 %) y aparece en casi todos los sectores (14 de 18) y en la mayoría de los departamentos (21 de 33 con brecha concluyente). Saber cuánto paga por hora el sector y la región donde quieres trabajar te da argumentos para negociar. |
 
 Continuidad con el Proyecto 1: es la misma pregunta (ingresos por sexo y nivel educativo), **delimitada** a la educación superior y ampliada con edad y departamento para la nueva audiencia.
 
@@ -36,7 +36,8 @@ Continuidad con el Proyecto 1: es la misma pregunta (ingresos por sexo y nivel e
 | Ingreso por hora | Σ(INGLABO·FEX) / Σ(P6800·4,3333·FEX), con INGLABO > 0 **y** P6800 > 0 | Se lee: "por cada hora trabajada". En Power BI, a `Ingreso_Hora_Promedio` **le faltan estos dos filtros**. |
 | Brecha (%) | (Hombres − Mujeres) / Hombres × 100 | Positiva = las mujeres reciben menos. Se presenta con **1 decimal y el signo %** (ej. 13,7 %). |
 | % que cotiza a pensión | Σ FEX con P6920 = 1 / Σ FEX de ocupados con P6920 ∈ {1, 2, 3} | Es una **aproximación** a la protección social, **no** la medición oficial de informalidad del DANE. |
-| Precisión territorial | Coeficiente de variación (CV) de la brecha por departamento, por bootstrap de viviendas (`DIRECTORIO`) | Umbrales DANE: ≤ 7 % precisa · 7–15 % aceptable · 15–20 % regular (usar con precaución) · > 20 % poco precisa (se marca en el mapa). |
+| Margen de error | Intervalo de confianza del 95 % por bootstrap de viviendas (`DIRECTORIO`), 500 repeticiones, semilla 2026 | Una brecha es **concluyente** si el intervalo no incluye el 0. En el mapa, los departamentos no concluyentes van en gris. |
+| Precisión (CV) | Coeficiente de variación del ingreso por hora de cada sexo, por bootstrap | Umbrales DANE: ≤ 7 % precisa · 7–15 % aceptable · 15–20 % regular · > 20 % poco precisa. Los 33 departamentos quedan en precisa o aceptable. |
 
 Cifras de control (verificadas el 17-nov-2026 con esta definición; el notebook es la fuente oficial):
 
@@ -72,5 +73,10 @@ La pareja anterior del Proyecto 1 (`#1F5FA8` / `#7B3FA0`) tiene un contraste de 
 1. Son comparaciones **descriptivas**: no explican por qué existe la brecha ni miden discriminación (no se controla por profesión, cargo, experiencia ni empresa).
 2. Son datos **transversales**: la diferencia entre grupos de edad no muestra cómo cambia la brecha a lo largo de la vida de una misma persona.
 3. INGLABO es ingreso **declarado**; se excluyen las personas con ingreso 0 o sin dato.
-4. La representatividad departamental de la GEIH es **anual**; con 7 meses, las cifras departamentales se marcan según su CV.
+4. La representatividad departamental de la GEIH es **anual**; con 7 meses, el mapa marca en gris los departamentos donde la brecha no es concluyente. En Arauca, Casanare, Putumayo, San Andrés, Amazonas, Guainía, Guaviare, Vaupés y Vichada la muestra es **solo urbana** (`CLASE = 1`).
 5. Cifras de enero–julio de 2026; no son el promedio anual.
+6. Solo se incluye a personas **con trabajo remunerado**: quien busca empleo o trabaja sin pago (por ejemplo, en el negocio familiar) no aparece en las cifras.
+
+## 6. Fuentes complementarias
+
+- **DANE, Marco Geoestadístico Nacional (MGN)**, capa municipal `MGN_MPIO_POLITICO` (WGS84), entregada como material del curso (sesión 02 de R). Los 1.121 municipios se unen por `DPTO_CCDGO` para obtener los 33 departamentos y el mapa se dibuja en MAGNA-SIRGAS Origen Nacional (EPSG:9377).
