@@ -138,44 +138,73 @@ Siempre en tres pasos: **qué mide** (ingreso mensual o por hora), **cómo se mi
 
 ---
 
-## Parte 2. Preparación para R (lo que sigue)
+## Parte 2. El mapa en R
 
-### 2.1 Qué vamos a construir
+### 2.1 Qué construimos
 
-`r/Equipo3_Proyecto3_Mapa.Rmd`: un mapa coroplético de Colombia por **departamento** con la brecha de ingreso por hora en educación superior (todas las edades, enero–julio 2026). Los departamentos donde la brecha **no es concluyente** (el IC 95 % incluye el 0) van en gris con su propia entrada en la leyenda.
+`r/Equipo3_Proyecto3_Mapa.Rmd` (se abre en RStudio y se le da **Knit**; tarda cerca de 1 minuto). Produce:
 
-### 2.2 Los pasos y lo que significa cada uno
-
-| Paso | Código (sf + dplyr + ggplot2) | Qué debes saber explicar |
+| Archivo | Qué es | Para qué sirve |
 |---|---|---|
-| 1. Leer la cartografía | `st_read("datos/originales/cartografia/MGN_MPIO_POLITICO.shp")` | Es el Marco Geoestadístico Nacional del DANE, capa municipal (1.121 municipios). Viene en WGS84 (EPSG:4326). |
-| 2. Reproyectar | `st_transform(crs = 9377)` | EPSG:9377 = MAGNA-SIRGAS / Origen Nacional, la proyección plana oficial de Colombia. Las áreas y distancias quedan en metros y el país no sale deformado. |
-| 3. Pasar de municipios a departamentos | `group_by(DPTO_CCDGO) %>% summarise()` | `summarise` sobre un objeto sf **une las geometrías** (disuelve los límites internos). La GEIH no permite cifras municipales. |
-| 4. Simplificar | `st_simplify(dTolerance = 1000)` | Quita vértices (tolerancia de 1 km) para que el mapa pese poco. No cambia lo que se lee a escala nacional. |
-| 5. Leer la tabla de Python | `read_csv(..., col_types = cols(DPTO = col_character()))` | El código se lee como **texto** para no perder el 0 inicial ("05" Antioquia). Si se lee como número, la unión falla. |
-| 6. Unión espacial (por atributo) | `left_join(dptos, brecha, by = c("DPTO_CCDGO" = "DPTO"))` | Se verifica que los 33 departamentos encuentren pareja (`anti_join` vacío). Es el criterio "integridad de uniones" de la rúbrica. |
-| 7. Clasificar la brecha | `classInt::classIntervals(style = "fixed")` con cortes 0–5–10–15–20–25+ | Se usan cortes fijos y redondos porque la audiencia los lee fácil y se pueden comparar con la cifra nacional (13,7 %). Los cuantiles o k-means darían límites raros (12,73 %). |
-| 8. Dibujar | `geom_sf(aes(fill = clase))` + `scale_fill_manual` | Escala secuencial de un solo tono (más oscuro = brecha mayor). Gris = no concluyente. |
-| 9. Elementos cartográficos | Título, subtítulo, leyenda, fuente, **escala** y **norte** | En ggplot se agregan con `ggspatial` (`annotation_scale`, `annotation_north_arrow`), o se hace en `tmap` con `tm_scalebar` y `tm_compass`. |
-| 10. San Andrés | Recuadro aparte (inset) o nota | Queda lejos del continente; si no se pone aparte, el mapa se encoge. |
-| 11. Exportar | `ggsave("r/salidas/Equipo3_Proyecto3_Mapa.png", dpi = 300)` | PNG para la presentación y HTML del Rmd para entregar. |
+| `r/Equipo3_Proyecto3_Mapa.html` | El documento completo, con código, salidas y textos | Entregable de R (código comentado y ejecutado) |
+| `r/salidas/Equipo3_Proyecto3_Mapa_Brecha_Departamento.png` | Mapa coroplético estático (300 ppp) | Diapositiva del mapa |
+| `r/salidas/Equipo3_Proyecto3_Intervalos_Departamento.png` | Brecha de cada departamento con su margen de error | Respaldo; explica por qué hay grises |
+| `r/salidas/Equipo3_Proyecto3_Mapa_Interactivo.html` | Mismo mapa en `tmap` (modo `view`) | Consulta: clic en un departamento y aparecen sus cifras |
+
+**Qué se pinta:** la brecha de ingreso por hora en educación superior (todas las edades, enero–julio 2026), por departamento. La cifra **no se calcula en R**: viene del notebook (sección 5) en `datos/procesados/brecha_departamento.csv`. R solo la lleva al mapa.
+
+### 2.2 Los pasos del código y qué debes saber explicar
+
+| Paso | Código | Qué decir |
+|---|---|---|
+| 1. Rutas | `BASE <- if (dir.exists("../datos")) ".." else "."` | Funciona igual con Knit (que corre desde `r/`) y desde la raíz del repo. No usamos `setwd()`. |
+| 2. Leer la cartografía | `st_read(...MGN_MPIO_POLITICO.shp)` | Marco Geoestadístico Nacional del DANE, capa municipal, 1.121 municipios, en WGS84 (EPSG:4326, grados). |
+| 3. Reproyectar | `st_transform(crs = 9377)` + `st_make_valid()` | EPSG:9377 = MAGNA-SIRGAS Origen Nacional, la proyección plana oficial de Colombia (metros). `st_make_valid` arregla polígonos mal cerrados antes de unirlos. |
+| 4. Municipios → departamentos | `group_by(DPTO_CCDGO) %>% summarise(n_municipios = n())` | `summarise` sobre un objeto `sf` **une las geometrías** y borra los límites internos. Quedan 33 departamentos y verificamos que sumen 1.121 municipios. |
+| 5. Simplificar | `st_simplify(dTolerance = 500, preserveTopology = TRUE)` | Quita vértices a menos de 500 m para que el archivo pese poco. `preserveTopology` evita que las islas (San Andrés, Providencia) desaparezcan. |
+| 6. Nombres | `tribble(...)` con 33 filas | Los nombres de la capa vienen en mayúsculas y algunos sin tilde ("QUINDIO"). También marca los 9 departamentos con muestra **solo urbana**. |
+| 7. Leer la tabla de Python | `read_csv(..., col_types = cols(DPTO = col_character()))` | El código va como **texto** para no perder el 0 de "05" (Antioquia). Como número, la unión fallaría. |
+| 8. Unir y verificar | `left_join` + dos `anti_join` + `stopifnot` | Se revisa en los dos sentidos: ningún departamento sin dato y ningún dato sin departamento. Si falla, el documento se detiene. (Criterio de integridad de uniones.) |
+| 9. Clasificar | `classIntervals(style = "fixed", fixedBreaks = c(10, 15, 20, 25, 35))` + `cut()` | 4 clases de 5 en 5 puntos; los no concluyentes van aparte en gris. Resultado: 8 / 6 / 5 / 2 departamentos y 12 grises. |
+| 10. Colores | `PALETA` | Secuencial de un solo tono (rojo teja de la brecha, `#AD4A3C`), más oscuro = brecha mayor. Gris claro sin tono para "no concluyente". |
+| 11. Etiquetas | `st_point_on_surface()` + tabla `posiciones` | Solo 6 etiquetas: las 5 brechas concluyentes más altas y Bogotá como referencia. Las de departamentos pequeños (Caldas, Quindío, Bogotá) van sobre el Pacífico con una línea. `st_point_on_surface` garantiza que el punto caiga **dentro** del departamento (un centroide puede caer fuera en formas irregulares). |
+| 12. San Andrés | `ggplotGrob(recuadro)` dentro de `annotation_custom()` | El archipiélago está a unos 700 km de la costa; en su posición real encogería el mapa. Va en un recuadro aparte, a otra escala. |
+| 13. Elementos cartográficos | `annotation_scale()`, `annotation_north_arrow()`, `labs(caption = ...)` | Escala (300 km), norte, leyenda, fuente, proyección y método del margen de error. |
+| 14. Interactivo | `tmap_mode("view")` + `tm_polygons(popup.vars = ...)` + `tm_basemap(NULL)` | Al hacer clic se ve: brecha, margen de error, "por cada $ 100…", ingreso por hora de cada sexo, muestra y si es solo urbana. Sin mapa de fondo: CARTO ahora pide clave de API y llenaba el mapa de marcas de agua; así además funciona sin internet. |
+| 15. Exportar | `ggsave(..., dpi = 300)` y `tmap_save(..., selfcontained = TRUE)` | PNG para la presentación y HTML que se abre con doble clic. |
 
 ### 2.3 Decisiones que te van a preguntar
 
-- **¿Por qué departamentos y no municipios o ciudades?** La GEIH es representativa por departamento (en el agregado anual), no por municipio. Las 23 ciudades son puntos, no áreas, y el Power BI ya las muestra.
-- **¿Por qué gris y no el color de la brecha estimada?** Si el IC incluye el 0, no podemos afirmar que haya brecha. Pintarlo con un color de brecha sería inventar una diferencia. Es honestidad de escala (criterio de ética de la rúbrica).
-- **¿Por qué una escala secuencial y no divergente?** Casi todos los valores concluyentes son positivos (las mujeres reciben menos). Una divergente centrada en 0 desperdiciaría la mitad de la paleta.
-- **¿El mapa dice que vivir en X *causa* más brecha?** No. Describe dónde se observa una brecha mayor.
-- **Lectura del mapa:**
-  - Brechas altas y concluyentes: Guaviare (28,1 %), Casanare (27,3 %), Caldas (24,9 %), Quindío (24,1 %) y Meta (20,8 %).
-  - 12 departamentos sin brecha concluyente.
-  - Bogotá: alrededor de 13,5 % (IC 8,7 % – 18,6 %), cerca del promedio nacional.
+- **¿Por qué departamentos y no municipios?** La GEIH da cifras confiables por departamento si se juntan varios meses; por municipio no. Las 23 ciudades son puntos, no áreas, y ya están en el Power BI.
+- **¿Por qué los cortes empiezan en 10 y no en 0?** Ningún departamento con brecha concluyente tiene menos de 11,4 %. Empezar en 0 gastaría dos colores en clases vacías. Los cortes de 5 en 5 son redondos y fáciles de leer, y la clase 10–15 % agrupa a los que están cerca del promedio nacional (13,7 %). Con cuantiles o Jenks saldrían límites como "13,84 % a 16,45 %".
+- **¿Por qué gris y no el color de la brecha?** Si el margen de error incluye el 0, no podemos afirmar que haya diferencia. Pintarlo con color de brecha sería mostrar algo que los datos no sostienen (ética, escala no engañosa). **Gris no significa "ganan lo mismo"**: significa "no alcanza la muestra para afirmarlo".
+- **¿Por qué secuencial y no divergente?** Todos los concluyentes son positivos (las mujeres reciben menos). Una escala centrada en 0 desperdiciaría la mitad de los colores.
+- **¿Qué es el círculo?** En Arauca, Casanare, Putumayo, San Andrés, Amazonas, Guainía, Guaviare, Vaupés y Vichada, **todas** las viviendas encuestadas están en cabeceras municipales (variable `CLASE = 1` en la tabla de Características generales; lo revisamos en los microdatos). La cifra no representa a la población rural, aunque el color cubra todo el departamento.
+- **¿Por qué todas las edades y no solo 18–28?** Al cruzar edad y departamento, varias celdas quedan con menos de 30 hombres jóvenes. La diferencia por edad se cuenta con el gráfico de Python.
+- **¿El mapa dice que vivir en X causa más brecha?** No. Describe dónde se observa una brecha mayor, no por qué.
+- **¿Por qué EPSG:9377?** Es el sistema plano oficial de Colombia, adoptado por el IGAC en 2020. En grados (4326) el país sale levemente estirado y la barra de escala no mediría bien.
 
-### 2.4 Antes de abrir RStudio
+### 2.4 Lectura del mapa (cifras verificadas en el HTML)
 
-1. R 4.6.2 ya está instalado y `sf` carga bien.
-2. Falta instalar `ggspatial` (escala y norte en ggplot) y `readr`:
+| Qué | Cifra | En palabras simples |
+|---|---|---|
+| Guaviare | 28,1 % (IC 15,5 % a 38,7 %) | Por cada $ 100 por hora de un hombre, una mujer recibe cerca de $ 71,90. **Ojo:** muestra pequeña (217 hombres y 319 mujeres) y solo urbana. |
+| Casanare | 27,3 % (IC 15,6 % a 38,5 %) | Cerca de $ 72,70 por cada $ 100. Mismo cuidado: solo urbana. |
+| Caldas | 24,9 % (IC 19,2 % a 29,9 %) | La brecha alta **más firme**: muestra grande (más de 4.500 personas) e intervalo estrecho. |
+| Quindío | 24,1 % (IC 17,0 % a 32,1 %) | Eje Cafetero, también alta. |
+| Meta | 20,8 % | Quinta más alta. |
+| Bogotá | 13,4 % (IC 8,7 % a 18,6 %) | Casi igual a la nacional (13,7 %): cerca de $ 86,60 por cada $ 100. |
+| No concluyentes | 12 departamentos | Varios en el Caribe (Córdoba, Sucre, Magdalena, La Guajira) y el Pacífico (Chocó, Cauca, Nariño), más Cundinamarca, Putumayo, Amazonas, Guainía y Vaupés. |
+| Intervalos más anchos | Amazonas, Cundinamarca, Vichada | Más de 34 puntos de punta a punta: la cifra puede cambiar mucho con otra muestra. |
+| Intervalos más estrechos | Bogotá, Caldas, Antioquia | Unos 10 a 11 puntos. |
+
+**Frase para la sustentación:** "En 21 de los 33 departamentos podemos afirmar que las mujeres con educación superior reciben menos por hora que los hombres con educación superior. En ninguno se observa lo contrario de forma concluyente. La brecha más alta y firme está en el Eje Cafetero; las de Guaviare y Casanare son altas pero vienen de muestras pequeñas y solo urbanas."
+
+### 2.5 Cómo correrlo
+
+1. R 4.6.2 y RStudio. Paquetes (una sola vez):
    ```r
-   install.packages(c("ggspatial", "readr"))
+   install.packages(c("sf", "dplyr", "readr", "ggplot2", "ggspatial", "classInt", "tmap", "rmarkdown", "knitr"))
    ```
-3. El Rmd se abre desde `r/` y usa rutas relativas (`../datos/...`). En RStudio, el **Knit** se ejecuta desde la carpeta del Rmd, así que funciona sin `setwd()`.
+2. Abrir `r/Equipo3_Proyecto3_Mapa.Rmd` → **Knit**. No necesita RTools ni `setwd()`.
+3. Antes, el notebook de Python debe haber generado `datos/procesados/brecha_departamento.csv` (ya está en el repo).

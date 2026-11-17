@@ -54,7 +54,11 @@ Requiere R ≥ 4.4 (probado con R 4.6.2) y RStudio. **No necesita RTools.**
 install.packages(c("sf", "ggplot2", "dplyr", "readr", "classInt", "ggspatial", "tmap", "rmarkdown", "knitr"))
 ```
 - Abre `r/Equipo3_Proyecto3_Mapa.Rmd` y haz **Knit** (o ejecuta `rmarkdown::render("r/Equipo3_Proyecto3_Mapa.Rmd")`).
-- Usa `datos/originales/cartografia/` y `datos/procesados/brecha_departamento.csv`, y exporta el mapa a `r/salidas/`.
+- Usa `datos/originales/cartografia/` y `datos/procesados/brecha_departamento.csv`. Genera:
+  - `r/Equipo3_Proyecto3_Mapa.html`: el documento con código, salidas y lectura;
+  - `r/salidas/Equipo3_Proyecto3_Mapa_Brecha_Departamento.png`: el mapa estático, 300 ppp;
+  - `r/salidas/Equipo3_Proyecto3_Intervalos_Departamento.png`: el margen de error por departamento;
+  - `r/salidas/Equipo3_Proyecto3_Mapa_Interactivo.html`: el mapa interactivo en `tmap`, que se abre con doble clic.
 
 ### 3. Presentación
 Abre `presentacion/Equipo3_Proyecto3_Presentacion.html` en un navegador. Se avanza con las flechas del teclado. La versión PDF está en `entregables/`.
