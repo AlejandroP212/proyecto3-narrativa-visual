@@ -34,21 +34,21 @@
 Archivo de trabajo: `powerbi/Equipo3_Proyecto3_Dashboard.pbix`, que es una copia del P1. El original queda intacto en la carpeta del P1.
 
 ### A. Correcciones que pidió la docente en el P1 (obligatorias)
-- [ ] **Títulos neutrales y descriptivos** en todos los visuales. Cambios:
+- [x] **Títulos neutrales y descriptivos** en todos los visuales. Cambios:
   - "A mayor educación, mayor brecha de ingresos" → "Ingreso laboral mensual promedio por nivel educativo y sexo".
   - "La brecha no cierra entre enero y julio" → "Brecha de ingreso mensual por mes, enero–julio 2026".
   - "La brecha cae con la educación, pero persiste en superior" → "Brecha de ingreso mensual por nivel educativo".
   - "Aun pagando por hora, la brecha casi no cambia" → "Brecha de ingreso mensual y por hora según nivel educativo".
   - "En superior, las mujeres cotizan igual que los hombres" → "Porcentaje de ocupados que cotiza a pensión, por sexo y nivel educativo".
   - Además, los títulos "A mayor educación, mayor brecha" y "La brecha cae con la educación" **se contradecían**. En porcentaje, la brecha baja con la educación (de ~35 % a ~18 %).
-- [ ] **Página "Causas y Detalle" → renombrar a "Detalle"** (o "Detalle por nivel y ciudad"). "Causas" sugiere causalidad y la guía lo prohíbe.
-- [ ] **Formato de porcentajes:** las medidas de brecha y `%_Cotiza` no tienen formato (FormatString vacío). Ponles **Porcentaje con 1 decimal** (Herramientas de medición → Formato → Porcentaje, 1 decimal). Deben mostrarse como "18,5 %".
-- [ ] **Segmentadores con lista desplegable** para Ciudad y Nivel educativo (Formato del visual → Configuración del segmentador → Estilo: **Lista desplegable**), en ambas páginas. Revisa el segundo segmentador de la página 2: se llama "Nivel educativo" pero filtra **Ciudad**.
-- [ ] **Documentar la fórmula de informalidad:** en la página de detalle, agrega un cuadro de texto que diga:
+- [x] **Página "Causas y Detalle" → renombrar a "Detalle"** (o "Detalle por nivel y ciudad"). "Causas" sugiere causalidad y la guía lo prohíbe.
+- [x] **Formato de porcentajes:** las medidas de brecha y `%_Cotiza` no tienen formato (FormatString vacío). Ponles **Porcentaje con 1 decimal** (Herramientas de medición → Formato → Porcentaje, 1 decimal). Deben mostrarse como "18,5 %".
+- [x] **Segmentadores con lista desplegable** para Ciudad y Nivel educativo (Formato del visual → Configuración del segmentador → Estilo: **Lista desplegable**), en ambas páginas. Revisa el segundo segmentador de la página 2: se llama "Nivel educativo" pero filtra **Ciudad**.
+- [x] **Documentar la fórmula de informalidad:** en la página de detalle, agrega un cuadro de texto que diga:
   > "% que cotiza a pensión = ocupados con P6920 = 1 (cotiza) / ocupados con P6920 ∈ {1, 2, 3}, ponderado por FEX_C18. Es una aproximación a la protección social, no la medición oficial de informalidad del DANE."
 
 ### B. Correcciones de las medidas DAX (para que coincidan con Python y R)
-- [ ] **Corregir `Ingreso_Hora_Promedio`**: le faltan los filtros de ingreso y horas positivos.
+- [x] **Corregir `Ingreso_Hora_Promedio`**: le faltan los filtros de ingreso y horas positivos.
   ```dax
   Ingreso_Hora_Promedio =
   CALCULATE(
@@ -60,12 +60,12 @@ Archivo de trabajo: `powerbi/Equipo3_Proyecto3_Dashboard.pbix`, que es una copia
       Fact_Ocupados[Horas_Semanales] > 0
   )
   ```
-- [ ] **Nueva medida** para la tarjeta de brecha por hora en educación superior:
+- [x] **Nueva medida** para la tarjeta de brecha por hora en educación superior:
   ```dax
   Brecha_Hora_EducSuperior =
   CALCULATE([Brecha_Hora], Dim_Educacion[Categoria] = "Superior")
   ```
-- [ ] **Verificar qué incluye la categoría "Superior".** Debe ser P3042 = 8 a 13 (técnica profesional → doctorado), **sin** normalista (7). Corre esto en la vista de consultas DAX:
+- [x] **Verificar qué incluye la categoría "Superior".** Debe ser P3042 = 8 a 13 (técnica profesional → doctorado), **sin** normalista (7). Corre esto en la vista de consultas DAX:
   ```dax
   EVALUATE
   SUMMARIZECOLUMNS(
@@ -73,7 +73,7 @@ Archivo de trabajo: `powerbi/Equipo3_Proyecto3_Dashboard.pbix`, que es una copia
       "Registros", COUNTROWS(Fact_Ocupados)
   )
   ```
-- [ ] **Nueva columna Grupo de edad** + segmentador desplegable "Grupo de edad". Es clave para la audiencia. En la tabla donde esté la edad (P6040):
+- [x] **Nueva columna Grupo de edad** + segmentador desplegable "Grupo de edad". Es clave para la audiencia. En la tabla donde esté la edad (P6040):
   ```dax
   Grupo_Edad =
   SWITCH(TRUE(),
@@ -86,7 +86,7 @@ Archivo de trabajo: `powerbi/Equipo3_Proyecto3_Dashboard.pbix`, que es una copia
   Si la edad no está en `Fact_Ocupados`, tráela en Power Query con la misma llave (DIRECTORIO + SECUENCIA_P + HOGAR + ORDEN + PERIODO).
 
 ### C. Diseño y accesibilidad
-- [ ] **Colores** (Ver → Temas → Personalizar el tema actual, o edita el JSON del tema):
+- [x] **Colores** (Ver → Temas → Personalizar el tema actual, o edita el JSON del tema):
 
   | Uso | Color |
   |---|---|
@@ -96,17 +96,17 @@ Archivo de trabajo: `powerbi/Equipo3_Proyecto3_Dashboard.pbix`, que es una copia
   | Neutro | `#6B7280` |
 
   El azul `#1F5FA8` y el morado `#7B3FA0` actuales tienen un contraste de 1,1:1 entre sí: **no se distinguen con daltonismo**. Es una mejora justificada que debes mencionar en la sustentación. Asigna los colores **por categoría** (Hombre siempre azul, Mujer siempre ocre) en todos los visuales.
-- [ ] **Etiquetas de datos** en las barras principales, para no depender solo del color.
-- [ ] En cada página, un **cuadro de texto pequeño "Cómo leer esta página"** en lenguaje ciudadano y el pie: "Fuente: DANE, GEIH enero–julio 2026. Cálculos del Equipo 3. Promedios ponderados con el factor de expansión. Comparaciones descriptivas, no causales."
-- [ ] Tooltips con lenguaje simple ("Ingreso mensual promedio", no "Ingreso_Promedio").
+- [x] **Etiquetas de datos** en las barras principales, para no depender solo del color.
+- [x] En cada página, un **cuadro de texto pequeño "Cómo leer esta página"** en lenguaje ciudadano y el pie: "Fuente: DANE, GEIH enero–julio 2026. Cálculos del Equipo 3. Promedios ponderados con el factor de expansión. Comparaciones descriptivas, no causales."
+- [x] Tooltips con lenguaje simple ("Ingreso mensual promedio", no "Ingreso_Promedio").
 
 ### D. Publicación y capturas (antes de las 7:00 p.m.)
-- [ ] **Publicar** en Power BI Service, reemplazando el informe del enlace actual o creando uno nuevo.
+- [x] **Publicar** en Power BI Service, reemplazando el informe del enlace actual o creando uno nuevo.
 - [ ] Comprobar que **la docente puede abrir el enlace**: Compartir → "Personas de su organización" si ella está en el mismo dominio de la universidad, o "Personas específicas" con su correo. Pruébalo en una ventana de incógnito. Pega el enlace final en la sección 5 de este archivo.
-- [ ] **Exportar capturas PNG** de cada página (sin filtros aplicados) a:
+- [x] **Exportar capturas PNG** de cada página (sin filtros aplicados) a:
   - `presentacion/img/powerbi_pagina1.png`
   - `presentacion/img/powerbi_pagina2.png`
-- [ ] Guardar el `.pbix` y subirlo al repo (sección 4).
+- [x] Guardar el `.pbix` y subirlo al repo (sección 4).
 
 ## 3. Cifras de control (deben coincidir con Power BI)
 
@@ -175,9 +175,9 @@ Ya están en el repo:
 
 ## 5. Para completar (Tomás)
 
-- Enlace final de Power BI Service: `https://app.powerbi.com/links/N7NaGvljjq?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99&pbi_source=linkShare` ← actualizar si cambia
+- Enlace final de Power BI Service: `https://app.powerbi.com/links/I6cDGeDgQ8?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99&pbi_source=linkShare`
 - ¿Permisos probados en incógnito o por la docente? ☐
-- Resultado de la consulta de control (sección 3): …
+- Resultado de la consulta de control (sección 3): 18,5 % mensual y 13,7 % por hora en educación superior; ingresos $ 4.068.584 (hombres) y $ 3.317.843 (mujeres).
 - Herramientas de IA que usaste y para qué (para el anexo de IA, máximo 1 página): …
 
 ## 6. Para la sustentación (todos responden de todo)
