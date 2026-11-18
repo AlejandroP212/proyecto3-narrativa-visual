@@ -84,7 +84,7 @@ Copia los productos finales a `entregables/` con nombres `Equipo3_Proyecto3_*`: 
 
 ### Power BI
 - Archivo: `powerbi/Equipo3_Proyecto3_Dashboard.pbix`. Ábrelo con Power BI Desktop.
-- Enlace en Power BI Service: https://app.powerbi.com/links/N7NaGvljjq?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99&pbi_source=linkShare
+- Enlace en Power BI Service: https://app.powerbi.com/links/I6cDGeDgQ8?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99&pbi_source=linkShare
 
 ## Fuentes
 - **DANE, Gran Encuesta Integrada de Hogares (GEIH) 2026**, marco 2018, enero–julio. Microdatos: https://microdatos.dane.gov.co/index.php/catalog/900

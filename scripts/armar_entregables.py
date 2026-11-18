@@ -19,7 +19,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 DESTINO = RAIZ / "entregables"
-ENLACE_PBI = ("https://app.powerbi.com/links/N7NaGvljjq?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99"
+ENLACE_PBI = ("https://app.powerbi.com/links/I6cDGeDgQ8?ctid=3b944d9a-1051-4685-b09d-9a95ee2dbd99"
               "&pbi_source=linkShare")
 
 # origen (relativo a la raíz) -> destino (relativo a entregables/)
